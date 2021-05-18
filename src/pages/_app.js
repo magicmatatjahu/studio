@@ -1,6 +1,7 @@
 import React from 'react'
 import App from 'next/app'
 import AppContext from '../contexts/AppContext'
+import clientEvents from '../lib/client-events';
 import '../css/tailwind.css'
 
 class AsyncApiStudio extends App {
@@ -27,6 +28,11 @@ class AsyncApiStudio extends App {
   }
 
   render() {
+    if (typeof window !== 'undefined') {
+      console.log('\n\n\nlol\n\n\n\n')
+      clientEvents.emit('page:render');
+    }
+
     const { Component, pageProps, context } = this.props
 
     return (
