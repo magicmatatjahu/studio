@@ -6,8 +6,8 @@ interface ToolbarProps {}
 export const Toolbar: React.FunctionComponent<ToolbarProps> = () => {
   return (
     <div>
-      <div className="px-4 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center justify-between h-16 px-4">
+      <div className="pl-2.5 pr-4 border-b border-gray-700 bg-gray-800">
+        <div className="flex items-center justify-between h-12">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <img

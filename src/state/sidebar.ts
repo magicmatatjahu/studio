@@ -2,6 +2,7 @@ import { createState, useState } from '@hookstate/core';
 
 export interface SidebarState {
   show: boolean;
+  mode: 'collapsed' | 'expanded';
   panels: {
     newFile: boolean;
     navigation: boolean;
@@ -13,6 +14,7 @@ export interface SidebarState {
 
 export const sidebarState = createState<SidebarState>({
   show: true,
+  mode: 'expanded',
   panels: {
     newFile: false,
     navigation: true,

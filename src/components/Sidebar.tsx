@@ -1,5 +1,5 @@
 import React from 'react';
-import { VscListSelection, VscCode, VscOpenPreview, VscGraph, VscNewFile } from 'react-icons/vsc';
+import { VscListSelection, VscCode, VscOpenPreview, VscTypeHierarchy, VscNewFile } from 'react-icons/vsc';
 
 import { SettingsModal } from './Modals/Settings/SettingsModal';
 
@@ -49,6 +49,7 @@ function setActiveNav(navItem: NavItemType) {
 
 interface NavItem {
   name: string;
+  title: string;
   state: () => boolean;
   icon: React.ReactNode;
 }
@@ -57,6 +58,7 @@ interface SidebarProps {}
 
 export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
   const sidebarState = state.useSidebarState();
+  const sidebarMode = sidebarState.mode.get();
 
   if (sidebarState.show.get() === false) {
     return null;
@@ -66,30 +68,35 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
     // navigation
     {
       name: 'navigation',
+      title: 'Navigation',
       state: () => sidebarState.panels.navigation.get(),
       icon: <VscListSelection className="w-5 h-5" />,
     },
     // editor
     {
       name: 'editor',
+      title: 'Editor',
       state: () => sidebarState.panels.editor.get(),
       icon: <VscCode className="w-5 h-5" />,
     },
     // template
     {
       name: 'template',
+      title: 'Preview',
       state: () => sidebarState.panels.view.get() && sidebarState.panels.viewType.get() === 'template',
       icon: <VscOpenPreview className="w-5 h-5" />,
     },
     // visuliser
     {
       name: 'visualiser',
+      title: 'Visualiser',
       state: () => sidebarState.panels.view.get() && sidebarState.panels.viewType.get() === 'visualiser',
-      icon: <VscGraph className="w-5 h-5" />,
+      icon: <VscTypeHierarchy className="w-5 h-5" />,
     },
     // newFile
     {
       name: 'newFile',
+      title: 'Templates',
       state: () => false,
       icon: <VscNewFile className="w-5 h-5" />,
     },
@@ -103,14 +110,21 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
             key={item.name}
             title={(item.name.charAt(0).toUpperCase() + item.name.slice(1))}
             onClick={() => setActiveNav(item.name as NavItemType)}
-            className={`flex text-sm border-l-2  ${
+            className={`flex flex-col justify-center text-sm border-l-2 ${
               item.state()
-                ? 'text-white hover:text-gray-500 border-white'
+                ? 'text-white border-pink-500'
                 : 'text-gray-500 hover:text-white border-gray-800'
             } focus:outline-none border-box p-4`}
             type="button"
           >
-            {item.icon}
+            <span className='mx-auto'>
+              {item.icon}
+            </span>
+            {sidebarMode === 'expanded' && (
+              <span className='mt-1 text-xs mx-auto'>
+                {item.title}
+              </span>
+            )}
           </button>
         ))}
       </div>

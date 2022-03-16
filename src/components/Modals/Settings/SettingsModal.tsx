@@ -19,6 +19,9 @@ function saveOptions(settings: SettingsState = {} as any) {
 
 export const SettingsModal: React.FunctionComponent = () => {
   const settingsState = state.useSettingsState();
+  const sidebarState = state.useSidebarState();
+  const sidebarMode = sidebarState.mode.get();
+
   const [autoSaving, setAutoSaving] = useState(settingsState.editor.autoSaving.get());
   const [savingDelay, setSavingDelay] = useState(settingsState.editor.savingDelay.get());
   const [autoRendering, setAutoRendering] = useState(settingsState.templates.autoRendering.get());
@@ -143,11 +146,18 @@ export const SettingsModal: React.FunctionComponent = () => {
       confirmDisabled={confirmDisabled}
       opener={
         <button
-          className={'flex border-l-2 text-gray-500 hover:text-white border-gray-800 focus:outline-none border-box p-4'}
+          className={'flex flex-col justify-center w-full border-l-2 text-gray-500 hover:text-white border-gray-800 focus:outline-none border-box p-4'}
           type="button"  
           title="Settings"  
         >
-          <VscSettingsGear className="w-5 h-5" />
+          <span className='mb-1 mx-auto'>
+            <VscSettingsGear className="w-5 h-5" />
+          </span>
+          {sidebarMode === 'expanded' && (
+            <span className='text-xs mx-auto'>
+              Settings
+            </span>
+          )}
         </button>
       }
       onSubmit={onSubmit}
