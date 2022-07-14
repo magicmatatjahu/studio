@@ -1,25 +1,16 @@
-import React, { useEffect } from 'react';
+import { useInject } from '@adi/react';
+import { Provider } from 'react-redux';
 
-import AsyncAPIStudio from './studio';
+import { StateService } from './modules/state/state.service';
 
-import state from './state';
+import { Layout } from './modules/core/components/Layout/Layout';
 
-const App: React.FunctionComponent = () => {
-  const editorState = state.useEditorState();
-  const editorLoaded = editorState.editorLoaded.get();
-
-  useEffect(() => {
-    if (editorLoaded === true) {
-      const preloader = document.getElementById('preloader');
-      if (preloader) {
-        preloader.classList.add('loaded');
-      }
-    }
-  }, [editorLoaded]); // eslint-disable-line
+export function App() {
+  const stateService = useInject(StateService);
 
   return (
-    <AsyncAPIStudio />
+    <Provider store={stateService.getStore()}>
+      <Layout />
+    </Provider>
   );
-};
-
-export default App;
+}

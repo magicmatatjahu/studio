@@ -1,29 +1,65 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
+import 'reflect-metadata';
 
-import '@asyncapi/react-component/styles/default.min.css';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { Module, Injector } from "@adi/core";
+import { Module as ModuleProvider } from '@adi/react';
+
+import { AsyncAPIModule } from './modules/asyncapi/asyncapi.module';
+import { CommandsModule } from './modules/commands/commands.module';
+import { CoreModule } from './modules/core/core.module';
+import { ExplorerModule } from './modules/explorer/explorer.module';
+import { EventsModule } from './modules/events/events.module';
+import { FileSystemModule } from './modules/filesystem/filesystem.module';
+import { MonacoModule } from './modules/monaco/monaco.module';
+import { NavigationModule } from './modules/navigation/navigation.module';
+import { StateModule } from './modules/state/state.module';
+import { ToolsManager } from './modules/tools/tools.module';
+
+import { App } from './App';
+
 import './tailwind.css';
+import "allotment/dist/style.css";
 import './main.css';
 
-window.MonacoEnvironment = window.MonacoEnvironment || {
-  getWorkerUrl(_: string, label: string) {
-    // for json worker
-    if (label === 'json') {
-      return `${process.env.PUBLIC_URL}/js/monaco/json.worker.bundle.js`;
-    }
-    // for yaml worker
-    if (label === 'yaml' || label === 'yml') {
-      return `${process.env.PUBLIC_URL}/js/monaco/yaml.worker.bundle.js`;
-    }
-    // for core editor worker
-    return `${process.env.PUBLIC_URL}/js/monaco/editor.worker.bundle.js`;
-  },
-};
+// import reportWebVitals from './reportWebVitals';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+@Module({
+  imports: [
+    CoreModule,
+    CommandsModule,
+    AsyncAPIModule,
+    ExplorerModule,
+    EventsModule,
+    FileSystemModule,
+    MonacoModule,
+    NavigationModule,
+    StateModule,
+    ToolsManager,
+  ]
+})
+export class AppModule {}
+
+async function bootstrap() {
+  const injector = await Injector.create(AppModule).init();
+
+  const root = createRoot(
+    document.getElementById('root') as HTMLElement
+  );
+  
+  root.render(
+    <StrictMode>
+      <ModuleProvider module={injector} cacheID='studio:app'>
+        <App />
+      </ModuleProvider>
+    </StrictMode>
+  );
+}
+
+bootstrap();
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+// reportWebVitals();
