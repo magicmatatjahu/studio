@@ -1,5 +1,4 @@
 import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
-
 import type { FileStat, FileType } from './interfaces';
 
 export abstract class FileSystemService {

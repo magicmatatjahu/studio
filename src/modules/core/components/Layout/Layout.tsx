@@ -2,7 +2,7 @@ import { Allotment } from "allotment";
 
 import { ActivityBar } from '../ActivityBar/ActivityBar';
 import { BottomPanel } from '../BottomPanel/BottomPanel';
-import { PanelGroups } from '../Panels/PanelGroups';
+import { Panels } from '../Panels/Panels';
 import { PrimarySideBar } from '../SideBar/Primary/PrimarySideBar';
 import { SecondarySideBar } from '../SideBar/Secondary/SecondarySideBar';
 import { NavBar } from '../NavBar/NavBar';
@@ -30,7 +30,7 @@ export const Layout: FunctionComponent<LayoutProps> = () => {
           <Allotment.Pane minSize={150}>
             <Allotment defaultSizes={[3, 1]} vertical={true}>
               <Allotment.Pane>
-                <PanelGroups />
+                <Panels />
               </Allotment.Pane>
               <Allotment.Pane minSize={150} snap={true}>
                 <BottomPanel />
@@ -38,7 +38,7 @@ export const Layout: FunctionComponent<LayoutProps> = () => {
             </Allotment>
           </Allotment.Pane>
 
-          <Allotment.Pane minSize={150} snap={true} visible={false}>
+          <Allotment.Pane minSize={150} snap={true}>
             <SecondarySideBar />
           </Allotment.Pane>
         </Allotment>

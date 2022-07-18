@@ -31,7 +31,7 @@ export const ExpandedPanel: React.FunctionComponent<ExpandedPanelProps> = ({
           setOpen(oldState => !oldState);
         }}
       >
-        <div className='flex flex-row items-center'>
+        <div className='flex flex-row items-center overflow-hidden'>
           <button className="inline-block mr-1">
             {open ? (
               <VscChevronDown />
@@ -39,7 +39,7 @@ export const ExpandedPanel: React.FunctionComponent<ExpandedPanelProps> = ({
               <VscChevronRight />
             )}
           </button>
-          <h3 className="uppercase inline-block font-bold whitespace-nowrap text-ellipsis">{title}</h3>
+          <h3 className="uppercase inline-block font-bold overflow-hidden whitespace-nowrap text-ellipsis">{title}</h3>
         </div>
 
         <div className={hover ? 'block' : 'hidden'}>

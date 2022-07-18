@@ -27,14 +27,17 @@ export const TreeItem: React.FunctionComponent<TreeItemProps> = (item) => {
   const ItemCollapsedIcon = itemKindDetails?.collapsedIcon;
 
   return (
-    <>
+    <div>
       <div 
         {...additionalProps}
-        className={`group ${additionalProps.className || ''} text-xs pr-4 bg-gray-800 hover:bg-gray-700 cursor-pointer text-gray-300`}
-        style={{ ...additionalProps.style || {}, paddingLeft: `${1 + deep * 1}rem` }}
+        className={`group ${additionalProps.className || ''} text-xs px-4 bg-gray-800 hover:bg-gray-700 cursor-pointer text-gray-300`}
       >
-        <div className='flex flex-row items-center justify-between py-[1px]' onClick={() => setExpaned(expand => !expand)}>
-          <div className='flex flex-row items-center'>
+        <div className='flex flex-row items-center justify-between' onClick={() => setExpaned(expand => !expand)}>
+          {deep ? Array.from(Array(deep).keys()).map((idx) => (
+            <div className='flex-none border-l border-gray-600 py-[1.5px] text-[0px] ml-1.5 pl-1.5' key={idx}>l</div>
+          )) : null}
+
+          <div className='flex-1 flex flex-row items-center overflow-hidden py-[1.5px]'>
             {hasItems ? (
               <button className="inline-block mr-1">
                 {expanded ? (
@@ -50,13 +53,13 @@ export const TreeItem: React.FunctionComponent<TreeItemProps> = (item) => {
                 <ItemDefaultIcon />
               </div>
             )}
-            <div>
+            <div className='overflow-hidden whitespace-nowrap text-ellipsis'>
               {content}
             </div>
           </div>
 
           {itemKindActions ? (
-            <div className='hidden group-hover:block'>
+            <div className='flex-none hidden group-hover:block'>
               <ul className='flex flex-row items-center'>
                 {itemKindActions.map(action => (
                   <li className='flex flex-row items-center inline ml-0.5' key={action.label} title={action.label}>
@@ -71,6 +74,6 @@ export const TreeItem: React.FunctionComponent<TreeItemProps> = (item) => {
       <div className={expanded ? 'block': 'hidden'}>
         <TreeViewList items={items} deep={deep + 1} />
       </div>
-    </>
+    </div>
   );
 };

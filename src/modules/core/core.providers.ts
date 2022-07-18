@@ -15,4 +15,8 @@ export const providers: Array<Provider> = [
     provide: 'studio:status-bar:element',
     hooks: [Optional([]), All()],
   },
+  {
+    provide: 'studio:views:element',
+    hooks: [Optional([]), All()],
+  },
 ];

@@ -19,5 +19,6 @@ export interface TreeViewItemDetail {
 export interface TreeViewItemDetailAction {
   label: string;
   icon: React.ElementType;
+  action: string;
   compProps?: (item: TreeViewItem) => React.DetailedHTMLProps<React.HTMLAttributes<any>, any>;
 }

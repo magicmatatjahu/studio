@@ -5,9 +5,9 @@ import { TreeView } from '../../core/components/common/TreeView/TreeView';
 import type React from 'react';
 import type { TreeViewItem, TreeViewItemDetail } from '../../core/components/common/TreeView/interfaces';
 
-interface MemoryFileSystemProps {}
+interface BrowserFileSystemProps {}
 
-export const MemoryFileSystem: React.FunctionComponent<MemoryFileSystemProps> = () => {
+export const BrowserFileSystem: React.FunctionComponent<BrowserFileSystemProps> = () => {
   const items: Array<TreeViewItem> = [
     {
       id: '1',
@@ -52,12 +52,6 @@ export const MemoryFileSystem: React.FunctionComponent<MemoryFileSystemProps> = 
               content: "second dir"
             },
           ]
-        },
-        {
-          id: '4',
-          kind: 'file',
-          label: 'first dir',
-          content: "first dir"
         },
       ],
     }

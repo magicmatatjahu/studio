@@ -12,11 +12,13 @@ export class CommandsService {
     this.commands.set(name, handler);
   }
 
-  execute<P>(name: string, payload: P): any | Promise<any> {
+  execute<P>(name: string, payload: P, silent: boolean = true): any | Promise<any> {
     const command = this.commands.get(name);
     if (typeof command === 'function') {
       return command(payload);
     }
-    throw Error('Given command does not exist');
+    if (!silent) {
+      throw Error('Given command does not exist');
+    }
   }
 }
