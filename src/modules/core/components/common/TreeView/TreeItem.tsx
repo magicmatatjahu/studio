@@ -1,18 +1,17 @@
 import { useContext, useState } from 'react';
-import { VscChevronDown, VscChevronRight, VscPlug } from 'react-icons/vsc';
 
 import { TreeViewContext } from './TreeView';
 import { TreeViewList } from './TreeViewList';
 import { IconButton } from '../../../../ui/components/Button/IconButton';
 
-import type React from 'react';
+import type { FunctionComponent } from 'react';
 import type { TreeViewItem } from './interfaces';
 
 interface TreeItemProps extends TreeViewItem {
   deep: number;
 }
 
-export const TreeItem: React.FunctionComponent<TreeItemProps> = (item) => {
+export const TreeItem: FunctionComponent<TreeItemProps> = (item) => {
   const { kind, content, items, deep } = item;
 
   const [expanded, setExpaned] = useState(false);
@@ -20,8 +19,7 @@ export const TreeItem: React.FunctionComponent<TreeItemProps> = (item) => {
 
   const itemKindDetails = details?.[kind];
   const itemKindActions = itemKindDetails?.actions;
-  const additionalProps = itemKindDetails?.compProps?.(item) ?? {};
-  const hasItems = items ? items.length > 0 : false;
+  const additionalProps = itemKindDetails?.props?.(item) ?? {};
   const ItemDefaultIcon = itemKindDetails?.defaultIcon;
   const ItemExpandedIcon = itemKindDetails?.expandedIcon;
   const ItemCollapsedIcon = itemKindDetails?.collapsedIcon;
@@ -38,7 +36,7 @@ export const TreeItem: React.FunctionComponent<TreeItemProps> = (item) => {
           )) : null}
 
           <div className='flex-1 flex flex-row items-center overflow-hidden py-[1.5px]'>
-            {hasItems ? (
+            {ItemExpandedIcon && ItemExpandedIcon ? (
               <button className="inline-block mr-1">
                 {expanded ? (
                   ItemExpandedIcon ? <ItemExpandedIcon /> : <ItemDefaultIcon />
@@ -63,7 +61,7 @@ export const TreeItem: React.FunctionComponent<TreeItemProps> = (item) => {
               <ul className='flex flex-row items-center'>
                 {itemKindActions.map(action => (
                   <li className='flex flex-row items-center inline ml-0.5' key={action.label} title={action.label}>
-                    <IconButton icon={action.icon} {...action.compProps?.(item) || {}} />
+                    <IconButton icon={action.icon} {...action.props?.(item) || {}} />
                   </li>
                 ))}
               </ul>

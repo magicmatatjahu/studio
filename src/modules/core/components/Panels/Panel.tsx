@@ -13,6 +13,8 @@ import { useListener } from '../../../ui/hooks/useListener';
 import type { FunctionComponent } from 'react';
 import type { Panel as PanelInterface } from '../../services/interfaces';
 
+const native = window.showDirectoryPicker
+
 interface PanelProps extends PanelInterface {}
 
 export const Panel: FunctionComponent<PanelProps> = (_panel) => {
@@ -34,7 +36,7 @@ export const Panel: FunctionComponent<PanelProps> = (_panel) => {
     <div className="h-full min-h-full bg-gray-800 relative">
       <div 
         className='flex flex-col h-full min-h-full relative'
-        onClick={() => panelsManager.setActivePanel(_panel.id)}
+        onClick={async () => panelsManager.setActivePanel(_panel.id)}
       >
         <div className='flex-none flex flex-row justify-between items-center border-b border-gray-700 w-full h-6 text-xs'>
           <div className={`flex-none h-full ${_panel.id === activePanel ? 'opacity-1' : 'opacity-50'}`}>
@@ -44,8 +46,7 @@ export const Panel: FunctionComponent<PanelProps> = (_panel) => {
           <div className='flex-none flex flex-row items-center justify-center h-full ml-1'>
             <IconButton 
               icon={VscAdd}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 panelsManager.createDefaultTab(_panel.id);
               }}
             />
@@ -53,8 +54,7 @@ export const Panel: FunctionComponent<PanelProps> = (_panel) => {
 
           <div 
             className='flex-1 w-full h-full cursor-pointer'
-            onDoubleClick={(e) => {
-              e.stopPropagation();
+            onDoubleClick={() => {
               panelsManager.createDefaultTab(_panel.id);
             }}
           />
@@ -62,7 +62,13 @@ export const Panel: FunctionComponent<PanelProps> = (_panel) => {
           <div className='flex-none border-l border-gray-700 h-full'>
             <ul className='flex flex-row items-center h-full p-1'>
               <li>
-                <IconButton icon={VscSplitHorizontal} onClick={() => panelsManager.createPanel(_panel.id)} />
+                <IconButton 
+                  icon={VscSplitHorizontal} 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    panelsManager.createPanel(_panel.id);
+                  }} 
+                />
               </li>
               <li className='ml-1'>
                 <IconButton icon={GoKebabHorizontal} />
@@ -78,7 +84,9 @@ export const Panel: FunctionComponent<PanelProps> = (_panel) => {
                 key={tab.id}
                 className={`absolute overflow-auto h-auto top-0 bottom-0 right-0 left-0 ${panel.activeTab === tab.id ? 'block' : 'hidden'}`}
               >
-                {tab.id}
+                <div className='flex flex-none flex-col overflow-y-auto overflow-x-hidden bg-gray-800 h-full'>
+                  <tab.content {...tab} />
+                </div>
               </li>
             ))}
           </ul>

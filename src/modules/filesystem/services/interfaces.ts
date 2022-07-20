@@ -24,3 +24,5 @@ export interface FileChangeEvent {
   type: FileChangeType;
   uri: monacoAPI.Uri;
 }
+
+export type Uri = monacoAPI.Uri;

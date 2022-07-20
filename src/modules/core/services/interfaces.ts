@@ -8,7 +8,14 @@ export interface Panel {
 export interface PanelTab {
   id: string;
   panelId: string;
-  toolId: string,
-  tab: React.ReactNode;
-  content: React.ReactNode;
+  viewId: string,
+  tab: React.ElementType;
+  content: React.ElementType;
+  data: any;
+}
+
+export interface View {
+  id: string;
+  tab: React.ElementType;
+  content: React.ElementType;
 }

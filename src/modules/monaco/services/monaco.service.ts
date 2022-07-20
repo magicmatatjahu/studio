@@ -1,25 +1,23 @@
 import * as monaco from 'monaco-editor';
-import * as monacoYAML from 'monaco-yaml';
+import * as monacoYaml from 'monaco-yaml';
 import { Uri } from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { Injectable, injectableMixin, SingletonScope } from "@adi/core";
+import { Injectable, SingletonScope } from "@adi/core";
 
 import type { OnInit } from "@adi/core";
 import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
-
-const THEME_NAME = 'asyncapi-theme';
 
 @Injectable({
   scope: SingletonScope,
 })
 export class MonacoService implements OnInit {
-  private viewStates = new Map<Uri, string>();
+  private themeName = 'asyncapi-theme';
 
   onInit(): void | Promise<void> {
     this.configureMonacoWorkers();
     this.loadLanguagesConfig();
     this.defineTheme();
-    this.monaco.editor.setTheme(THEME_NAME);
+    this.monaco.editor.setTheme(this.themeName);
   }
 
   get monaco(): typeof monaco {
@@ -42,17 +40,23 @@ export class MonacoService implements OnInit {
       .createModel(value, language, uri ? this.parseModelUri(uri) : undefined);
   }
 
-  deleteModel(uri: string | Uri) {
+  removeModel(uri: string | Uri) {
     const model = this.getModel(uri);
     model && model.dispose();
   }
 
+  createEditor = this.monaco.editor.create;
+
+  removeEditor(editor?: monacoAPI.editor.IStandaloneCodeEditor): void {
+    return editor?.dispose();
+  }
+
   private parseModelUri(uri: string | Uri) {
-    return uri instanceof Uri ? uri : Uri.parse(uri);
+    return Uri.isUri(uri) ? uri : Uri.parse(uri);
   }
 
   private defineTheme() {
-    this.monaco.editor.defineTheme(THEME_NAME, {
+    this.monaco.editor.defineTheme(this.themeName, {
       base: 'vs-dark',
       inherit: true,
       colors: {

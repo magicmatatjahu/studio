@@ -13,7 +13,6 @@ interface PanelTabPops extends PanelTabInterface {
 
 export const PanelTab: FunctionComponent<PanelTabPops> = ({
   id,
-  tab,
   activeTab,
   panelsManager,
 }) => {
@@ -29,7 +28,10 @@ export const PanelTab: FunctionComponent<PanelTabPops> = ({
       <IconButton 
         icon={VscChromeClose} 
         className='ml-1 text-gray-800 group-hover:text-gray-300'
-        onClick={() => panelsManager.removeTab(id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          panelsManager.removeTab(id);
+        }}
       />
     </div>
   );

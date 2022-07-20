@@ -54,7 +54,7 @@ export const MemoryFileSystem: React.FunctionComponent<MemoryFileSystemProps> = 
           ]
         },
         {
-          id: '4',
+          id: '8',
           kind: 'file',
           label: 'first dir',
           content: "first dir"
@@ -73,22 +73,18 @@ export const MemoryFileSystem: React.FunctionComponent<MemoryFileSystemProps> = 
         {
           label: 'Create file',
           icon: VscNewFile,
-          action: 'studio:explorer:create-file',
         },
         {
           label: 'Create directory',
           icon: VscNewFolder,
-          action: 'studio:explorer:create-directory',
         },
         {
           label: 'Edit directory',
           icon: VscEdit,
-          action: 'studio:explorer:Edit-directory',
         },
         {
           label: 'Remove directory',
           icon: VscTrash,
-          action: 'studio:explorer:remove-directory',
         },
       ]
     },
@@ -100,12 +96,10 @@ export const MemoryFileSystem: React.FunctionComponent<MemoryFileSystemProps> = 
         {
           label: 'Edit file',
           icon: VscEdit,
-          action: 'studio:explorer:edit-file',
         },
         {
           label: 'Remove file',
           icon: VscTrash,
-          action: 'studio:explorer:remove-file',
         },
       ]
     }

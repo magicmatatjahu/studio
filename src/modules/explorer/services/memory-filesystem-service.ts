@@ -12,7 +12,7 @@ export class MemoryFileSystemServive extends FileSystemService {
     return null as any;
   }
 
-  readDirectory(uri: monacoAPI.Uri): { [uri: string]: FileType } | Promise<{ [uri: string]: FileType }> {
+  readDirectory(uri: monacoAPI.Uri): Array<[string, FileType]> | Promise<Array<[string, FileType]>> {
     return null as any;
   }
 

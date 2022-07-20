@@ -12,13 +12,12 @@ export interface TreeViewItemDetail {
   expandedIcon?: React.ElementType | null;
   collapsedIcon?: React.ElementType | null;
   label: string;
-  compProps?: (item: TreeViewItem) => React.DetailedHTMLProps<React.HTMLAttributes<any>, any>;
+  props?: (item: TreeViewItem) => React.DetailedHTMLProps<React.HTMLAttributes<any>, any>;
   actions?: Array<TreeViewItemDetailAction>;
 }
 
 export interface TreeViewItemDetailAction {
   label: string;
   icon: React.ElementType;
-  action: string;
-  compProps?: (item: TreeViewItem) => React.DetailedHTMLProps<React.HTMLAttributes<any>, any>;
+  props?: (item: TreeViewItem) => React.DetailedHTMLProps<React.HTMLAttributes<any>, any>;
 }

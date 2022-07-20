@@ -3,7 +3,7 @@ import { Inject, Injectable, SingletonScope } from "@adi/core";
 import { EventEmitterService } from "../../events/services/event-emitter.service";
 
 import type { OnInit } from "@adi/core";
-import type { Panel, PanelTab } from "./interfaces";
+import type { Panel, PanelTab, View } from "./interfaces";
 
 @Injectable({
   scope: SingletonScope,
@@ -15,18 +15,20 @@ export class PanelsManager implements OnInit {
   private panels: Map<string, Panel> = new Map();
   private panelsOrder: Array<string> = [];
   private tabs: Map<string, PanelTab> = new Map();
+  private views: Map<string, View> = new Map();
 
   constructor(
     protected readonly eventEmitter: EventEmitterService,
-    @Inject('studio:views:element') protected readonly views: any[],
-  ) {}
+    @Inject('studio:views:element') views: View[],
+  ) {
+    views.forEach(view => {
+      this.views.set(view.id, view);
+    });
+  }
 
   onInit(): void | Promise<void> {
     const firstPanel = this.createPanel();
-    const firstTab = this.createDefaultTab(firstPanel.id);
-
     this.activePanel = firstPanel.id;
-    firstPanel.activeTab = firstTab.id;
   }
 
   getPanels(): Array<Panel> {
@@ -71,22 +73,26 @@ export class PanelsManager implements OnInit {
     }
 
     this.eventEmitter.emit('studio:panels:create-panel', { panel });
+    this.setActivePanel(id);
+    this.createDefaultTab(id);
+
     return panel;
   }
 
   createTab(
-    panelId: string,
-    toolId: string,
-    tab: React.ReactNode,
-    content: React.ReactNode,
+    panelId: string = this.activePanel,
+    viewId: string,
+    data?: any,
   ): PanelTab {
     const id = this.generateUniqueId();
+    const view = this.views.get(viewId)!;
     const panelTab: PanelTab = {
       id,
       panelId,
-      toolId,
-      tab,
-      content,
+      viewId,
+      tab: view?.tab,
+      content: view?.content,
+      data,
     };
     this.tabs.set(id, panelTab);
     const panel = this.getPanel(panelId)!;
@@ -98,27 +104,40 @@ export class PanelsManager implements OnInit {
   }
 
   createDefaultTab(panelId: string): PanelTab {
-    return this.createTab(panelId, 'studio:view:default', null, null);
+    return this.createTab(panelId, 'studio:view:monaco-editor');
   }
 
   removePanel(id: string) {
     const panel = this.getPanel(id);
     if (panel === undefined) return;
     panel.tabs.forEach(tab => this.tabs.delete(tab.id));
+
+    if (this.panels.size === 1) {
+      return;
+    }
+
     this.panels.delete(id);
+    const panelIndex = this.panelsOrder.findIndex(panelId => panelId === id);
+    const activePanelIndex = this.panelsOrder.findIndex(panelId => panelId === this.activePanel);
     this.panelsOrder = this.panelsOrder.filter(panelId => panelId !== id);
     this.eventEmitter.emit('studio:panels:delete-panel', { panel });
+
+    if (activePanelIndex <= panelIndex) {
+      const previousPanelId = panelIndex < 2 ? this.panelsOrder[0] : this.panelsOrder[panelIndex - 1]; 
+      this.setActivePanel(previousPanelId);
+    }
   }
 
   removeTab(id: string) {
     const tab = this.getTab(id);
     if (tab === undefined) return;
     this.tabs.delete(id);
+    
     const panel = this.getPanel(tab.panelId);
     if (panel === undefined) return;
+    
     const tabIndex = panel.tabs.findIndex(t => t.id === id);
     panel.tabs = panel.tabs.filter(t => t.id !== id);
-
     if (panel.activeTab === id) {
       if (tabIndex < 1) {
         panel.activeTab = panel.tabs[0]?.id || '';
@@ -129,9 +148,17 @@ export class PanelsManager implements OnInit {
 
     this.eventEmitter.emit('studio:panels:delete-tab', { tab });
     this.eventEmitter.emit('studio:panels:update-panel', { panel });
+
+    if (panel.tabs.length === 0) {
+      this.removePanel(panel.id);
+    }
   }
 
   setActivePanel(id: string) {
+    if (!this.getPanel(id)) {
+      return;
+    }
+
     this.activePanel = id;
     this.eventEmitter.emit('studio:panels:set-active-panel', { panel: this.getPanel(id) });
   }
