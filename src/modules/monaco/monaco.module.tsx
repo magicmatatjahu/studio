@@ -1,4 +1,5 @@
 import { Module, INITIALIZERS } from "@adi/core";
+import * as monaco from 'monaco-editor';
 
 import { MonacoEditor } from "./components/MonacoEditor";
 
@@ -14,6 +15,10 @@ import { MonacoService } from "./services/monaco.service";
   ],
   exports: [
     MonacoService,
+    {
+      provide: 'studio:monaco',
+      useValue: monaco,
+    },
     {
       provide: 'studio:views:element',
       useValue: {

@@ -19,15 +19,15 @@ export abstract class FileSystemService {
   abstract stat(uri: Uri | string): FileStat | Promise<FileStat>;
   abstract readDirectory(uri: Uri | string): Array<[string, FileType]> | Promise<Array<[string, FileType]>>; 
   abstract createDirectory(uri: Uri | string): void | Promise<void>;
-  abstract readFile(uri: Uri | string): Uint8Array | Promise<Uint8Array>;
-  abstract writeFile(uri: Uri | string, content: Uint8Array, options: { create: boolean, overwrite: boolean }): void | Promise<void>;
+  abstract readFile(uri: Uri | string): string | Promise<string>;
+  abstract writeFile(uri: Uri | string, content: string | Uint8Array, options: { create: boolean, overwrite: boolean }): void | Promise<void>;
   abstract delete(uri: Uri | string, options: { recursive: boolean }): void | Promise<void>;
   abstract rename(oldUri: Uri | string, newUri: Uri | string, options: { overwrite: boolean }): void | Promise<void>;
 
-  createFile(uri: Uri | string, content: Uint8Array, options: { overwrite: boolean } = { overwrite: false }): void | Promise<void> {
+  createFile(uri: Uri | string, content: string | Uint8Array, options: { overwrite: boolean } = { overwrite: false }): void | Promise<void> {
     return this.writeFile(uri, content, { create: true, overwrite: options?.overwrite || false });
   }
-  overwriteFile(uri: Uri | string, content: Uint8Array, options: { create: boolean } = { create: false }): void | Promise<void> {
+  overwriteFile(uri: Uri | string, content: string | Uint8Array, options: { create: boolean } = { create: false }): void | Promise<void> {
     return this.writeFile(uri, content, { overwrite: true, create: options?.create || false });
   }
 }

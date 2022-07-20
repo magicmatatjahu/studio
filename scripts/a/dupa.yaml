@@ -1,0 +1,5 @@
+asyncapi: 2.4.0
+info:
+  title: aosjpoas
+  version: '1.2.0'
+channels: {}

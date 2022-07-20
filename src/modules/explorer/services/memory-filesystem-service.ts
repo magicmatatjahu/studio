@@ -20,7 +20,7 @@ export class MemoryFileSystemServive extends FileSystemService {
 
   }
 
-  readFile(uri: monacoAPI.Uri): Uint8Array | Promise<Uint8Array> {
+  readFile(uri: monacoAPI.Uri): string | Promise<string> {
     return null as any;
   }
 

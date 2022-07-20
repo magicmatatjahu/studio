@@ -1,10 +1,9 @@
-import * as monaco from 'monaco-editor';
-import * as monacoYaml from 'monaco-yaml';
+import { Inject, Injectable, SingletonScope } from "@adi/core";
+import { setDiagnosticsOptions } from 'monaco-yaml';
 import { Uri } from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { Injectable, SingletonScope } from "@adi/core";
-
 import type { OnInit } from "@adi/core";
+import type { DiagnosticsOptions as YAMLDiagnosticsOptions } from 'monaco-yaml';
 import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
 
 @Injectable({
@@ -13,15 +12,14 @@ import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
 export class MonacoService implements OnInit {
   private themeName = 'asyncapi-theme';
 
+  constructor(
+    @Inject('studio:monaco') private readonly monaco: typeof monacoAPI,
+  ) {}
+
   onInit(): void | Promise<void> {
     this.configureMonacoWorkers();
-    this.loadLanguagesConfig();
     this.defineTheme();
     this.monaco.editor.setTheme(this.themeName);
-  }
-
-  get monaco(): typeof monaco {
-    return monaco;
   }
 
   getOrCreateModel(value: string, language: string, uri: string | Uri) {
@@ -51,6 +49,14 @@ export class MonacoService implements OnInit {
     return editor?.dispose();
   }
 
+  setJSONDiagnosticsOptions(options: monacoAPI.languages.json.DiagnosticsOptions) {
+    this.monaco.languages.json.jsonDefaults.setDiagnosticsOptions(options);
+  }
+
+  setYAMLDiagnosticsOptions(options: YAMLDiagnosticsOptions) {
+    setDiagnosticsOptions(options);
+  }
+
   private parseModelUri(uri: string | Uri) {
     return Uri.isUri(uri) ? uri : Uri.parse(uri);
   }
@@ -65,9 +71,6 @@ export class MonacoService implements OnInit {
       },
       rules: [{ token: '', background: '#252f3f' }],
     });
-  }
-
-  private loadLanguagesConfig() {
   }
 
   private configureMonacoWorkers() {

@@ -2,6 +2,7 @@ import { Injectable, SingletonScope } from "@adi/core";
 import { Uri } from 'monaco-editor/esm/vs/editor/editor.api';
 
 import { FileSystemService } from './filesystem.service';
+import { FileSystemHelpersServive } from './filesystem-helpers.service';
 
 import { FileType } from './interfaces';
 
@@ -12,10 +13,16 @@ import type { BrowserFileSystemAPI } from './filesystem.service';
   scope: SingletonScope,
 })
 export class BrowserFileSystemServive extends FileSystemService implements BrowserFileSystemAPI {
-	private dirHandle!: FileSystemDirectoryHandle;
+	private dirHandle: FileSystemDirectoryHandle | undefined;
 
 	private readonly directoriesHandles = new Map<string, FileSystemDirectoryHandle>();
 	private readonly filesHandles = new Map<string, FileSystemFileHandle>();
+
+	constructor(
+		private readonly fileSystemHelpers: FileSystemHelpersServive,
+	) {
+		super();
+	}
 
   async openDirectory() {
     this.dirHandle = await window.showDirectoryPicker({
@@ -68,7 +75,7 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 		}
 
 		try {
-			const handle = this.getDirectoryHandle(this.dirname(uri));
+			const handle = this.getDirectoryHandle(this.fileSystemHelpers.dirname(uri));
 			if (!handle) {
 				throw new Error('No such file or directory, readDirectory')
 			}
@@ -96,21 +103,21 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 		}
 
 		try {
-      const parentDir = this.getDirectoryHandle(this.dirname(uri));
+      const parentDir = this.getDirectoryHandle(this.fileSystemHelpers.dirname(uri));
 			if (!parentDir) {
 				throw new Error('No such parent directory, createDirectory');
 			}
 
-			const dirHandle = await parentDir.getDirectoryHandle(this.basename(uri), { create: true });
+			const dirHandle = await parentDir.getDirectoryHandle(this.fileSystemHelpers.basename(uri), { create: true });
 			this.registerDirectoryHandle(dirHandle, uri);
 		} catch (error) {
 			throw error;
 		}
   }
 
-  async readFile(uri: Uri | string): Promise<Uint8Array> {
+  async readFile(uri: Uri | string): Promise<string> {
 		if (!this.dirHandle) {
-			return new Uint8Array();
+			return '';
 		}
 
 		try {
@@ -120,14 +127,13 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 			}
 
 			const file = await handle.getFile();
-			return new Uint8Array(await file.arrayBuffer());
+			return file.text();
 		} catch (error) {
-			console.log(error);
 			throw error;
 		}
   }
 
-  async writeFile(uri: Uri | string, content: Uint8Array, options: { create: boolean, overwrite: boolean } = { create: false, overwrite: false }): Promise<void> {
+  async writeFile(uri: Uri | string, content: Uint8Array | string, options: { create: boolean, overwrite: boolean } = { create: false, overwrite: false }): Promise<void> {
 		if (!this.dirHandle) {
 			return;
 		}
@@ -150,12 +156,12 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 
 			// Create target as needed
 			if (!handle) {
-				const parentDir = this.getDirectoryHandle(this.dirname(uri));
+				const parentDir = this.getDirectoryHandle(this.fileSystemHelpers.dirname(uri));
 				if (!parentDir) {
 					throw new Error('No such parent directory, writeFile');
 				}
 
-				handle = await parentDir.getFileHandle(this.basename(uri), { create: true });
+				handle = await parentDir.getFileHandle(this.fileSystemHelpers.basename(uri), { create: true });
 				if (!handle) {
 					throw new Error('Unable to create file, writeFile');
 				}
@@ -165,6 +171,7 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 
 			// Write to target overwriting any existing contents
 			const writable = await handle.createWritable();
+			content = content instanceof Uint8Array ? this.fileSystemHelpers.uint8ArrayToString(content) : content;
 			await writable.write(content);
 			await writable.close();
 		} catch (error) {
@@ -178,12 +185,12 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 		}
 
 		try {
-      const parentDir = this.getDirectoryHandle(this.dirname(uri));
+      const parentDir = this.getDirectoryHandle(this.fileSystemHelpers.dirname(uri));
 			if (!parentDir) {
 				throw new Error('No such parent directory, delete');
 			}
 
-			await parentDir.removeEntry(this.basename(uri), options);
+			await parentDir.removeEntry(this.fileSystemHelpers.basename(uri), options);
 			await this.refreshHandles();
 		} catch (error) {
 			throw error;
@@ -196,15 +203,15 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 		}
 
 		try {
-			const fromUriString = this.toFileUriString(from);
-			const toUriString = this.toFileUriString(to);
+			const fromUriString = this.fileSystemHelpers.toFileUriString(from);
+			const toUriString = this.fileSystemHelpers.toFileUriString(to);
 
-			const fromDirName = this.dirname(fromUriString);
-			if (this.dirname(toUriString) !== fromDirName) {
-				to = `${fromDirName}/${this.filename(to)}`;
+			const fromDirName = this.fileSystemHelpers.dirname(fromUriString);
+			if (this.fileSystemHelpers.dirname(toUriString) !== fromDirName) {
+				to = `${fromDirName}/${this.fileSystemHelpers.filename(to)}`;
 			}
 
-			if (fromUriString === this.toFileUriString(to)) {
+			if (fromUriString === this.fileSystemHelpers.toFileUriString(to)) {
 				return; // no-op if the paths are the same
 			}
 
@@ -273,17 +280,17 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 	}
 
   private getHandle(uri: Uri | string): FileSystemHandle | undefined {
-    const uriString = this.toFileUriString(uri);
+    const uriString = this.fileSystemHelpers.toFileUriString(uri);
     return this.filesHandles.get(uriString) || this.directoriesHandles.get(uriString);
   }
 
   private getDirectoryHandle(uri: Uri | string): FileSystemDirectoryHandle | undefined {
-    const uriString = this.toFileUriString(uri);
+    const uriString = this.fileSystemHelpers.toFileUriString(uri);
     return this.directoriesHandles.get(uriString);
   }
 
   private getFileHandle(uri: Uri | string): FileSystemFileHandle | undefined {
-    const uriString = this.toFileUriString(uri);
+    const uriString = this.fileSystemHelpers.toFileUriString(uri);
     return this.filesHandles.get(uriString);
   }
 
@@ -303,32 +310,20 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
 	}
 
   private async registerDirectoryHandle(handle: FileSystemDirectoryHandle, pathOrUri: string | Uri): Promise<void> {
-    pathOrUri = this.toFileUri(pathOrUri);
-    this.directoriesHandles.set(pathOrUri.toString(), handle);
+    pathOrUri = this.fileSystemHelpers.toFileUriString(pathOrUri);
+    this.directoriesHandles.set(pathOrUri, handle);
 	}
 
   private async registerFileHandle(handle: FileSystemFileHandle, pathOrUri: string | Uri): Promise<void> {
-    pathOrUri = this.toFileUri(pathOrUri);
-    this.filesHandles.set(pathOrUri.toString(), handle);
+    pathOrUri = this.fileSystemHelpers.toFileUriString(pathOrUri);
+    this.filesHandles.set(pathOrUri, handle);
 	}
 
 	private supportedExtensions = ['json', 'yaml', 'yml'];
 	private isSupportedExtension(name: string) {
-		const extension = this.extension(name);
+		const extension = this.fileSystemHelpers.extension(name);
 		return this.supportedExtensions.includes(extension);
 	}
-
-  private toFileUri(pathOrUri: string | Uri): Uri {
-    if (!Uri.isUri(pathOrUri)) {
-      pathOrUri = Uri.file(pathOrUri.replace(/^file:\/\/\//, ''));
-    }
-    return pathOrUri;
-  }
-
-  private toFileUriString(pathOrUri: string | Uri): string {
-    pathOrUri = this.toFileUri(pathOrUri);
-    return pathOrUri.toString();
-  }
 
   private isFileSystemDirectoryHandle(handle: FileSystemHandle): handle is FileSystemDirectoryHandle {
 		return handle.kind === 'directory';
@@ -337,27 +332,6 @@ export class BrowserFileSystemServive extends FileSystemService implements Brows
   private isFileSystemFileHandle(handle: FileSystemHandle): handle is FileSystemFileHandle {
 		return handle.kind === 'file';
 	}
-
-  // https://stackoverflow.com/questions/190852/how-can-i-get-file-extensions-with-javascript/12900504#12900504	
-	extension(fname: string | Uri): string {
-    fname = this.toFileUri(fname);
-    return fname.path.slice((fname.path.lastIndexOf(".") - 1 >>> 0) + 2);
-  }
-
-	filename(path: string | Uri): string {
-		path = this.toFileUri(path);
-		return path.path.split('/').pop() || '';
-	}
-
-  dirname(path: string | Uri): string {
-		path = this.toFileUri(path);
-    return path.path.substring(0, path.path.lastIndexOf("/"));
-  }
-
-  basename(path: string | Uri): string {
-    path = this.toFileUri(path);
-    return path.path.substring(path.path.lastIndexOf('/') + 1);
-}
 
   hasFileSystemAccess(): boolean | Promise<boolean> {
     return typeof window === 'object' && 'showOpenFilePicker' in window;

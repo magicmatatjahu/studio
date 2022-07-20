@@ -1,25 +1,38 @@
-import { Injectable, SingletonScope } from "@adi/core";
+import { Inject, Injectable, SingletonScope } from "@adi/core";
 import { VscTrash, VscEdit, VscFolder, VscFolderOpened, VscNewFile, VscNewFolder, VscJson, VscRefresh } from 'react-icons/vsc';
 
 import { BrowserFileSystemServive } from "../../filesystem/services/browser-filesystem.service";
 import { PanelsManager } from "../../core/services/panels-manager.service";
 import { EventEmitterService } from "../../events/services/event-emitter.service";
 
+import { Uri } from 'monaco-editor/esm/vs/editor/editor.api';
+
 import { FileType } from "../../filesystem/services/interfaces";
 
+import type { OnInit } from "@adi/core";
 import type { TreeViewItem, TreeViewItemDetail } from '../../core/components/common/TreeView/interfaces';
 import type { ExpandedPanelAction } from '../../core/components/common/ExpandedPanel/interfaces';
-
+import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
 
 @Injectable({
   scope: SingletonScope,
 })
-export class BrowserFileSystemExplorer {
+export class BrowserFileSystemExplorer implements OnInit {
+  // stringified file uri -> tab id
+  private associatedTabs: Map<string, string> = new Map();
+
   constructor(
     private readonly browserFileSystemServive: BrowserFileSystemServive,
     private readonly panelsManager: PanelsManager,
     private readonly eventEmitter: EventEmitterService,
+    @Inject('studio:monaco') private readonly monaco: typeof monacoAPI,
   ) {}
+
+  onInit() {
+    this.eventEmitter.subscribe('studio:panels:delete-tab', ({ tab }) => {
+      this.associatedTabs.delete(tab.id);
+    });
+  }
 
   createPanelActions(): Array<ExpandedPanelAction> {
     return [
@@ -59,7 +72,6 @@ export class BrowserFileSystemExplorer {
             onClick: async (e) => {
               e.stopPropagation();
               await this.browserFileSystemServive.refreshHandles();
-              this.eventEmitter.emit('studio:bfs:refresh-handles');
             }
           }
         }
@@ -144,7 +156,18 @@ export class BrowserFileSystemExplorer {
         props: (item) => {
           return {
             onDoubleClick: () => {
-              this.panelsManager.createTab(undefined, 'studio:view:monaco-editor', { item });
+              const fileUriString = Uri.file(item.label).toString();
+              const possibleTab = this.associatedTabs.get(fileUriString);
+              if (possibleTab) {
+                const tab = this.panelsManager.getTab(possibleTab);
+                if (tab) {
+                  this.panelsManager.setActiveTab(tab.id);
+                  this.panelsManager.setActivePanel(tab.panelId);
+                }
+              } else {
+                const tab = this.panelsManager.createTab(undefined, 'studio:view:monaco-editor', { item });
+                this.associatedTabs.set(fileUriString, tab.id);
+              }
             }
           }
         },

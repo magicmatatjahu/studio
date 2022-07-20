@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 
 import { MonacoService } from '../services/monaco.service';
 import { BrowserFileSystemServive } from '../../filesystem/services/browser-filesystem.service';
+import { FileSystemHelpersServive } from '../../filesystem/services/filesystem-helpers.service';
 
 import { Uri } from 'monaco-editor/esm/vs/editor/editor.api';
 
@@ -18,6 +19,7 @@ interface MonacoEditorProps {
 export const MonacoEditor: FunctionComponent<MonacoEditorProps> = ({ data }) => {
   const monacoService = useInject(MonacoService);
   const browserFileSystem = useInject(BrowserFileSystemServive);
+  const fileSystemHelpers = useInject(FileSystemHelpersServive);
 
   const [isEditorReady, setIsEditorReady] = useState(false);
   const editorRef = useRef<monacoAPI.editor.IStandaloneCodeEditor>();
@@ -32,14 +34,14 @@ export const MonacoEditor: FunctionComponent<MonacoEditorProps> = ({ data }) => 
       }
 
       const label = data.item.label;
-      const extension = browserFileSystem.extension(label);
-      const unit8Array = await browserFileSystem.readFile(label);
-      const content = Buffer.from(unit8Array.buffer).toString();
+      const extension = fileSystemHelpers.extension(label);
+      const content = await browserFileSystem.readFile(label);
+      const modelUri = Uri.file(label);
 
       const model = monacoService.getOrCreateModel(
         content,
         extension,
-        Uri.file(label),
+        modelUri,
       );
 
       // for react strict mode
@@ -50,9 +52,10 @@ export const MonacoEditor: FunctionComponent<MonacoEditorProps> = ({ data }) => 
       }, {});
 
       editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, async () => {
-        const modelValue = editor.getModel()?.getValue();
-        const unit8Array = new Uint8Array(modelValue!.split('').map(l => l.charCodeAt(0)));
-        await browserFileSystem.overwriteFile(label, unit8Array);
+        const model = editor.getModel();
+        if (model) {
+          await browserFileSystem.overwriteFile(label, model.getValue());
+        }
       });
 
       setIsEditorReady(true);

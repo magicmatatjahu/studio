@@ -158,7 +158,6 @@ export class PanelsManager implements OnInit {
     if (!this.getPanel(id)) {
       return;
     }
-
     this.activePanel = id;
     this.eventEmitter.emit('studio:panels:set-active-panel', { panel: this.getPanel(id) });
   }

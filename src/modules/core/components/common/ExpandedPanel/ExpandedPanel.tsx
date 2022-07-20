@@ -28,52 +28,29 @@ export const ExpandedPanel: FunctionComponent<ExpandedPanelProps> = (panel) => {
           setOpen(oldState => !oldState);
         }}
       >
-          <button className="flex-none inline-block mr-1">
-            {open ? (
-              <VscChevronDown />
-            ) : (
-              <VscChevronRight />
-            )}
-          </button>
+        <button className="flex-none inline-block mr-1">
+          {open ? (
+            <VscChevronDown />
+          ) : (
+            <VscChevronRight />
+          )}
+        </button>
           
-          <h3 className="flex-1 uppercase inline-block font-bold overflow-hidden whitespace-nowrap text-ellipsis">{title}</h3>
+        <h3 className="flex-1 uppercase inline-block font-bold overflow-hidden whitespace-nowrap text-ellipsis">{title}</h3>
 
-          {actions ? (
-            <div className={`flex-none ${hover ? 'block' : 'block'}`}>
-              <ul className='flex flex-row items-center'>
-                {actions.map(action => (
-                  <li className='flex flex-row items-center inline ml-0.5 text-sm' key={action.label} title={action.label}>
-                    <IconButton icon={action.icon} {...action.props?.(panel) || {}} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-        {/* <div className='flex flex-row items-center justify-between overflow-hidden'>
-          <button className="flex-none inline-block mr-1">
-            {open ? (
-              <VscChevronDown />
-            ) : (
-              <VscChevronRight />
-            )}
-          </button>
-
-          <h3 className="flex-1 uppercase inline-block font-bold overflow-hidden whitespace-nowrap text-ellipsis">{title}</h3>
-
-          {actions ? (
-            <div className={`flex-none ${hover ? 'block' : 'hidden'}`}>
-              <ul className='flex flex-row items-center'>
-                {actions.map(action => (
-                  <li className='flex flex-row items-center inline ml-0.5' key={action.label} title={action.label}>
-                    <IconButton icon={action.icon} {...action.props?.(panel) || {}} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div> */}
+        {actions ? (
+          <div className={`flex-none ${hover ? 'block' : 'hidden'}`}>
+            <ul className='flex flex-row items-center'>
+              {actions.map(action => (
+                <li className='flex flex-row items-center inline ml-0.5 text-sm' key={action.label} title={action.label}>
+                  <IconButton icon={action.icon} {...action.props?.(panel) || {}} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
+      
       <div className={open ? 'block' : 'hidden'}>
         <Component />
       </div>

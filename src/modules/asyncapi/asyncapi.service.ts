@@ -17,7 +17,7 @@ import spec_2_3_0 from '@asyncapi/specs/schemas/2.3.0.json';
 import spec_2_4_0 from '@asyncapi/specs/schemas/2.4.0.json';
 
 import type { OnInit } from '@adi/core';
-import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
+import type { ParserOptions } from '@asyncapi/parser';
 
 const specs = {
   '2.0.0': spec_2_0_0,
@@ -48,8 +48,8 @@ export class AsyncAPIService implements OnInit {
     return Object.keys(specs).pop() as string;
   }
 
-  parse(asyncapi: string, uri: monacoAPI.Uri): Promise<AsyncAPIDocument> {
-    return parse(asyncapi);
+  parse(asyncapi: string, options?: ParserOptions): Promise<AsyncAPIDocument> {
+    return parse(asyncapi, options);
   }
 
   async convert(asyncapi: string, version?: string): Promise<string> {
@@ -66,9 +66,8 @@ export class AsyncAPIService implements OnInit {
     }
   }
 
-  isSupportedAsyncAPI(value: string | any): boolean {
-    const possibleAsyncAPI = this.tryRetrieveAsyncAPIVersion(value);
-    return possibleAsyncAPI ? Object.keys(specs).includes(possibleAsyncAPI) : false;
+  isSupportedAsyncAPI(version: string): boolean {
+    return Object.keys(specs).includes(version);
   }
 
   isNotSupportedAsyncAPI(value: string | any): boolean {
