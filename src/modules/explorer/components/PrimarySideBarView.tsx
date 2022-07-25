@@ -31,12 +31,6 @@ export const PrimarySideBarView: FunctionComponent<PrimarySideBarViewProps> = ()
       actions: browserFileSystemExplorer.createPanelActions(),
     },
     {
-      id: 'explorer:memory-file-system',
-      title: 'Memory File System',
-      opened: false,
-      component: MemoryFileSystem,
-    },
-    {
       id: 'explorer:asyncapi-document-structure',
       title: 'Document Structure',
       opened: false,

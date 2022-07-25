@@ -6,7 +6,7 @@ import { Panel } from './Panel';
 
 import { PanelsManager } from '../../services/panels-manager.service';
 
-import { useListener } from '../../../ui/hooks/useListener';
+import { useListener } from '@/hooks';
 
 import type { FunctionComponent } from 'react';
 import type { Panel as PanelInterface } from '../../services/interfaces';
@@ -26,7 +26,7 @@ export const Panels: FunctionComponent<PanelsProps> = () => {
   }
 
   return (
-    <div className='flex flex-none flex-col overflow-y-auto overflow-x-hidden bg-gray-500 h-full'>
+    <div className='flex flex-none flex-col overflow-y-auto overflow-x-hidden bg-gray-800 h-full'>
       <Allotment>
         {panels.map(panel => (
           <Allotment.Pane minSize={150} key={panel.id}>

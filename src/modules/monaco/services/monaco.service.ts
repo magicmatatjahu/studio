@@ -10,6 +10,7 @@ import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
   scope: SingletonScope,
 })
 export class MonacoService implements OnInit {
+  private editors: Map<string, monacoAPI.editor.IStandaloneCodeEditor> = new Map();
   private themeName = 'asyncapi-theme';
 
   constructor(
@@ -43,9 +44,32 @@ export class MonacoService implements OnInit {
     model && model.dispose();
   }
 
-  createEditor = this.monaco.editor.create;
+  getEditor(uri: string | Uri) {
+    uri = this.parseModelUri(uri).toString();
+    return this.editors.get(uri);
+  }
 
-  removeEditor(editor?: monacoAPI.editor.IStandaloneCodeEditor): void {
+  createEditor(domElement: HTMLElement, options?: monacoAPI.editor.IStandaloneEditorConstructionOptions, override?: monacoAPI.editor.IEditorOverrideServices): monacoAPI.editor.IStandaloneCodeEditor {
+    const editor = this.monaco.editor.create(domElement, options, override);
+    const uri = editor.getModel()?.uri.toString();
+    if (uri) {
+      this.editors.set(uri, editor);
+    }
+    return editor;
+  };
+
+  removeEditor(editor?: monacoAPI.editor.IStandaloneCodeEditor | string | Uri): void {
+    let uri: string | undefined;
+    if (typeof editor === 'string' || editor instanceof Uri) {
+      uri = this.parseModelUri(editor).toString();
+      editor = this.editors.get(uri);
+    }
+    if (!editor) {
+      return;
+    }
+    if (uri) {
+      this.editors.delete(uri);
+    }
     return editor?.dispose();
   }
 
@@ -55,6 +79,18 @@ export class MonacoService implements OnInit {
 
   setYAMLDiagnosticsOptions(options: YAMLDiagnosticsOptions) {
     setDiagnosticsOptions(options);
+  }
+
+  async scrollToEditorLine(uri: string | Uri, startLine: number, columnLine = 1) {
+    try {
+      const editor = this.getEditor(uri);
+      if (editor) {
+        editor.revealLineInCenter(startLine);
+        editor.setPosition({ lineNumber: startLine, column: columnLine });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   private parseModelUri(uri: string | Uri) {

@@ -9,13 +9,13 @@ export interface PanelTab {
   id: string;
   panelId: string;
   viewId: string,
-  tab: React.ElementType;
-  content: React.ElementType;
+  tabComponent: React.ElementType;
+  contentComponent: React.ElementType;
   data: any;
 }
 
 export interface View {
   id: string;
-  tab: React.ElementType;
-  content: React.ElementType;
+  tabComponent: React.ElementType;
+  contentComponent: React.ElementType;
 }

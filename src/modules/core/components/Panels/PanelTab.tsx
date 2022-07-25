@@ -12,25 +12,25 @@ interface PanelTabPops extends PanelTabInterface {
 }
 
 export const PanelTab: FunctionComponent<PanelTabPops> = ({
-  id,
   activeTab,
   panelsManager,
+  ...tab
 }) => {
-  const activeClassName = activeTab === id
+  const activeClassName = activeTab === tab.id
     ? 'border-t-pink-500'
     : 'border-t-gray-800';
 
   return (
     <div className={`group flex flex-row items-center justify-center bg-gray-800 h-full px-2 border-t-2 border-b-2 border-b-gray-800 focus:outline-none border-box cursor-pointer ${activeClassName}`}>
-      <span className='text-gray-300'>
-        lol
-      </span>
+      <div className='flex flex-row items-center justify-center text-gray-300 text-xs'>
+        <tab.tabComponent {...tab} />
+      </div>
       <IconButton 
         icon={VscChromeClose} 
         className='ml-1 text-gray-800 group-hover:text-gray-300'
         onClick={(e) => {
           e.stopPropagation();
-          panelsManager.removeTab(id);
+          panelsManager.removeTab(tab.id);
         }}
       />
     </div>

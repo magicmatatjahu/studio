@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const path = require(`path`);
 
 function configureFallbacks(webpackConfig) {
   const fallback = webpackConfig.resolve.fallback || {};
@@ -26,10 +27,17 @@ module.exports = {
   babel: {
     plugins: [
       // for emit and read metadata from typescript decorators
-      'babel-plugin-transform-typescript-metadata'
+      'babel-plugin-transform-typescript-metadata',
     ],
   },
   webpack: {
+    alias: {
+      "@/hooks": path.resolve(__dirname, "src/hooks"),
+      "@/contexts": path.resolve(__dirname, "src/contexts"),
+      "@/core": path.resolve(__dirname, "src/modules/core"),
+      "@/modules": path.resolve(__dirname, "src/modules"),
+      "@/ui": path.resolve(__dirname, "src/modules/ui"),
+    },
     configure: (webpackConfig) => { 
       configureFallbacks(webpackConfig);
       return webpackConfig;

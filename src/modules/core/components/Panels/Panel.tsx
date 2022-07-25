@@ -8,12 +8,10 @@ import { IconButton } from '../../../ui/components/Button/IconButton';
 
 import { PanelsManager } from '../../services/panels-manager.service';
 
-import { useListener } from '../../../ui/hooks/useListener';
+import { useListener } from '@/hooks';
 
 import type { FunctionComponent } from 'react';
 import type { Panel as PanelInterface } from '../../services/interfaces';
-
-const native = window.showDirectoryPicker
 
 interface PanelProps extends PanelInterface {}
 
@@ -85,7 +83,7 @@ export const Panel: FunctionComponent<PanelProps> = (_panel) => {
                 className={`absolute overflow-auto h-auto top-0 bottom-0 right-0 left-0 ${panel.activeTab === tab.id ? 'block' : 'hidden'}`}
               >
                 <div className='flex flex-none flex-col overflow-y-auto overflow-x-hidden bg-gray-800 h-full'>
-                  <tab.content {...tab} />
+                  <tab.contentComponent {...tab} />
                 </div>
               </li>
             ))}

@@ -2,6 +2,7 @@ import { Module, INITIALIZERS } from "@adi/core";
 import * as monaco from 'monaco-editor';
 
 import { MonacoEditor } from "./components/MonacoEditor";
+import { EditorTab } from "./components/EditorTab";
 
 import { MonacoService } from "./services/monaco.service";
 
@@ -23,8 +24,8 @@ import { MonacoService } from "./services/monaco.service";
       provide: 'studio:views:element',
       useValue: {
         id: 'studio:view:monaco-editor',
-        tab: () => <div></div>,
-        content: MonacoEditor,
+        tabComponent: EditorTab,
+        contentComponent: MonacoEditor,
       }
     }
   ]

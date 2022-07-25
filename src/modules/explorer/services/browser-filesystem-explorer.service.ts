@@ -30,7 +30,12 @@ export class BrowserFileSystemExplorer implements OnInit {
 
   onInit() {
     this.eventEmitter.subscribe('studio:panels:delete-tab', ({ tab }) => {
-      this.associatedTabs.delete(tab.id);
+      const fileUri = tab?.data?.item?.label;
+      if (!fileUri) {
+        return;
+      }
+      const fileUriString = Uri.file(fileUri).toString();
+      this.associatedTabs.delete(fileUriString);
     });
   }
 

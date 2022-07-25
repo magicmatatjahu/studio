@@ -19,4 +19,8 @@ export const providers: Array<Provider> = [
     provide: 'studio:views:element',
     hooks: [Optional([]), All()],
   },
+  {
+    provide: 'studio:bottom-panel:element',
+    hooks: [Optional([]), All()],
+  },
 ];

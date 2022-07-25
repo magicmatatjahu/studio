@@ -7,7 +7,7 @@ import { Button } from '../../ui/components/Button/Button';
 import { BrowserFileSystemExplorer } from '../services/browser-filesystem-explorer.service';
 import { BrowserFileSystemServive } from '../../filesystem/services/browser-filesystem.service';
 
-import { useListener } from '../../ui/hooks/useListener';
+import { useListener } from '@/hooks';
 
 import type { FunctionComponent } from 'react';
 import type { TreeViewItem } from '../../core/components/common/TreeView/interfaces';

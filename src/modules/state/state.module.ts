@@ -10,7 +10,7 @@ import { stateProviders } from "./state.providers";
     ReducerManagerService,
     {
       provide: INITIALIZERS,
-      useClass: StateService,
+      useExisting: StateService,
     }
   ],
   exports: [

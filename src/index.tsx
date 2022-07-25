@@ -3,21 +3,10 @@ import 'reflect-metadata';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Module, Injector } from "@adi/core";
-import { Module as ModuleProvider } from '@adi/react';
-
-import { AsyncAPIModule } from './modules/asyncapi/asyncapi.module';
-import { CommandsModule } from './modules/commands/commands.module';
-import { CoreModule } from './modules/core/core.module';
-import { ExplorerModule } from './modules/explorer/explorer.module';
-import { EventsModule } from './modules/events/events.module';
-import { FileSystemModule } from './modules/filesystem/filesystem.module';
-import { MonacoModule } from './modules/monaco/monaco.module';
-import { NavigationModule } from './modules/navigation/navigation.module';
-import { StateModule } from './modules/state/state.module';
-import { ToolsManager } from './modules/tools/tools.module';
+import { Module } from '@adi/react';
 
 import { App } from './App';
+import { bootstrapAppInjector } from './app.module';
 
 import './tailwind.css';
 import "allotment/dist/style.css";
@@ -25,24 +14,8 @@ import './main.css';
 
 // import reportWebVitals from './reportWebVitals';
 
-@Module({
-  imports: [
-    CoreModule,
-    CommandsModule,
-    AsyncAPIModule,
-    ExplorerModule,
-    EventsModule,
-    FileSystemModule,
-    MonacoModule,
-    NavigationModule,
-    StateModule,
-    ToolsManager,
-  ]
-})
-export class AppModule {}
-
 async function bootstrap() {
-  const injector = await Injector.create(AppModule).init();
+  const injector = await bootstrapAppInjector();
 
   const root = createRoot(
     document.getElementById('root') as HTMLElement
@@ -50,9 +23,9 @@ async function bootstrap() {
   
   root.render(
     <StrictMode>
-      <ModuleProvider module={injector} cacheID='studio:app'>
+      <Module module={injector} cacheID='studio:app'>
         <App />
-      </ModuleProvider>
+      </Module>
     </StrictMode>
   );
 }

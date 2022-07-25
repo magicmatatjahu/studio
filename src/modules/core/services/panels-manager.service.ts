@@ -90,8 +90,8 @@ export class PanelsManager implements OnInit {
       id,
       panelId,
       viewId,
-      tab: view?.tab,
-      content: view?.content,
+      tabComponent: view?.tabComponent,
+      contentComponent: view?.contentComponent,
       data,
     };
     this.tabs.set(id, panelTab);
@@ -178,6 +178,10 @@ export class PanelsManager implements OnInit {
     this.eventEmitter.emit('studio:panels:set-active-tab', { tab });
     this.eventEmitter.emit('studio:panels:update-panel', { panel });
   }
+
+  findTab(fn: (tab: PanelTab, index: number, tabs: PanelTab[]) => boolean): PanelTab | undefined {
+    return Array.from(this.tabs.values()).find(fn);
+  } 
 
   private generateUniqueId() {
     this.nextUniqueId = (this.nextUniqueId + 1) & 2147483647;

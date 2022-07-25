@@ -2,19 +2,24 @@ import { INITIALIZERS, Module } from "@adi/core";
 
 import { AsyncAPIService } from "./asyncapi.service";
 import { AsyncAPIMonacoService } from "./asyncapi-monaco.service";
+import { AsyncAPIParserService } from "./asyncapi-parser.service";
 
 @Module({
   providers: [
     AsyncAPIService,
     AsyncAPIMonacoService,
+    AsyncAPIParserService,
     {
       provide: INITIALIZERS,
-      useClass: AsyncAPIMonacoService,
+      useExisting: AsyncAPIMonacoService,
+    },
+    {
+      provide: INITIALIZERS,
+      useExisting: AsyncAPIParserService,
     }
   ],
   exports: [
     AsyncAPIService,
-    AsyncAPIMonacoService,
   ]
 })
 export class AsyncAPIModule {}
