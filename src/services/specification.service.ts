@@ -91,6 +91,8 @@ export class SpecificationService {
     return Object.keys(specs).pop() as SpecVersions;
   }
 
+  
+
   static shouldInformAboutLatestVersion(
     version: string,
   ): boolean {

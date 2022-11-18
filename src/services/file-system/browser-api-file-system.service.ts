@@ -1,20 +1,43 @@
 import { AbstractFileSystem } from './abstract-file-system.service';
 
-import type { File } from './abstract-file-system.service';
-import type { Uri } from './abstract-file-system.service';
+import state from '../../state';
 
-export class BrowserFileSystemServive extends AbstractFileSystem {
+import type { File, Uri } from './abstract-file-system.service';
+
+export class BrowserAPIFileSystemServive extends AbstractFileSystem {
 	private rootHandle: FileSystemDirectoryHandle | undefined;
 	private readonly files = new Map<string, File>();
 
   async openDirectory() {
-    this.rootHandle = await window.showDirectoryPicker({
-      mode: '',
+		if (this.rootHandle) {
+			return;
+		}
+
+    const handle = this.rootHandle = await window.showDirectoryPicker({
+      mode: 'readwrite',
     });
+		await this.registerFiles('', handle);
+		this.updateState();
+
+		setInterval(() => {
+			this.refresh();
+		}, 2000);
   }
 
-  async createDirectory(uri: Uri | string): Promise<void> {
+	async refresh() {
+		if (this.rootHandle) {
+			this.files.clear();
+			await this.registerFiles('', this.rootHandle);
+			this.updateState();
+		}
+	}
+
+  override async createDirectory(uri: Uri | string): Promise<void> {
 		try {
+			if (this.getFile(uri)) {
+				return;
+			}
+
       const parentDir = this.getFile(this.dirname(uri));
 			if (!parentDir || parentDir.type !== 'directory') {
 				return;
@@ -22,6 +45,7 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
 
 			const dirHandle = await parentDir.handle.getDirectoryHandle(this.basename(uri), { create: true });
 			this.registerDirectory(uri, dirHandle, parentDir);
+			this.updateState();
 		} catch (_) {
 			return;
 		}
@@ -46,7 +70,7 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
 		}
   }
 
-  async writeFile(uri: Uri | string, content: string, options: { create: boolean, overwrite: boolean } = { create: false, overwrite: false }): Promise<void> {
+  override async writeFile(uri: Uri | string, content: string, options: { create: boolean, overwrite: boolean } = { create: false, overwrite: false }): Promise<void> {
 		try {
       let handle: FileSystemFileHandle = this.getFile(uri)?.handle;
 
@@ -76,7 +100,8 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
 					return;
 				}
 
-        this.registerFile(uri, handle, parentDir);
+        await this.registerFile(uri, handle, parentDir);
+				this.updateState();
 			} else if (this.isDirectoryHandle(handle)) {
         return;
       }
@@ -85,30 +110,33 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
 			const writable = await handle.createWritable();
 			await writable.write(content);
 			await writable.close();
-		} catch (error) {
-			throw error;
+		} catch (_) {
+			return;
 		}
   }
 
-  async delete(uri: Uri | string, options: { recursive: boolean } = { recursive: true }): Promise<void> {
+  override async delete(uri: Uri | string, options: { recursive: boolean } = { recursive: true }): Promise<void> {
 		try {
-      const file = this.getFile(uri);
+			const file = this.getFile(uri);
 			if (!file) {
 				return;
 			}
 
+
       const { parent, uriString } = file;
-      if (parent) {
+      if (parent && parent.type === 'directory') {
         await parent.handle.removeEntry(this.basename(uri), options);
         parent.children = (parent.children || []).filter(f => f.uriString !== uriString);
       }
       this.files.delete(uriString);
-		} catch (error) {
-			throw error;
+			this.updateState();
+		} catch (_) {
+			console.log(_)
+			return;
 		}
   }
 
-  async rename(from: Uri | string, to: Uri | string, options: { overwrite: boolean } = { overwrite: true }): Promise<void> {
+  override async rename(from: Uri | string, to: Uri | string, options: { overwrite: boolean } = { overwrite: true }): Promise<void> {
 		try {
 			const fromUriString = this.toFileUriString(from);
 			const toUriString = this.toFileUriString(to);
@@ -137,7 +165,7 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
 
   private async registerFiles(path: string, handle: FileSystemDirectoryHandle | FileSystemFileHandle, dirFile?: File): Promise<void> {
     if (this.isDirectoryHandle(handle)) {
-      const dirPath = `${path}/${handle.name}`;
+      const dirPath = path ? `${path}/${handle.name}` : handle.name;
       const parentDir = this.registerDirectory(dirPath, handle, dirFile);
       for await (const fileHandle of handle.values()) {
         await this.registerFiles(dirPath, fileHandle, parentDir);
@@ -156,13 +184,13 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
       uri,
       uriString: uri.toString(),
       name: handle.name,
-      type: 'file',
+      type: 'directory',
       parent,
       children: [],
       handle,
     }
     this.files.set(file.uriString, file);
-    parent?.children?.push(file);
+    this.pushFile(file, parent);
     return file;
 	}
 
@@ -173,7 +201,7 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
       uri,
       uriString: uri.toString(),
       name: handle.name,
-      type: 'directory',
+      type: 'file',
       stat: {
         mtime: fileHandle.lastModified,
         size: fileHandle.size,
@@ -182,7 +210,7 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
       handle,
     }
     this.files.set(file.uriString, file);
-    parent?.children?.push(file);
+    this.pushFile(file, parent);
     return file;
 	}
 
@@ -190,8 +218,41 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
 		return handle.kind === 'directory';
 	}
 
-  private isFileHandle(handle: FileSystemHandle): handle is FileSystemFileHandle {
-		return handle.kind === 'file';
+	private updateState(): void {
+		const rootFiles: Array<File> = [];
+		for (const file of this.files.values()) {
+			if (file.parent?.handle === this.rootHandle) {
+				rootFiles.push(file);
+			}
+		}
+		state.fileSystem.browserAPIFiles.set(this.sortFiles(rootFiles));
+	}
+
+	private pushFile(file: File, parent?: File) {
+		if (parent && parent.children) {
+			parent.children.push(file);
+			parent.children = this.sortFiles(parent.children);
+		}
+	}
+
+	private sortFiles(files: Array<File>): Array<File> {
+		return [...files].sort((a, b) => {
+			const isADirectory = a.type === 'directory';
+			const isBDirectory = b.type === 'directory';
+			// directories
+			if (isADirectory || isBDirectory) {
+				if (isADirectory && isBDirectory) {
+					if (a.name > b.name) return 1;
+					if (a.name < b.name) return -1;
+					return 0;
+				}
+				return isADirectory ? -1 : 1;
+			}
+			// files
+			if (a.name > b.name) return 1;
+			if (a.name < b.name) return -1;
+			return 0;
+		});
 	}
 
   private supportedExtensions = ['json', 'yaml', 'yml'];
@@ -202,5 +263,5 @@ export class BrowserFileSystemServive extends AbstractFileSystem {
 
   override isSupported(): boolean | Promise<boolean> {
     return typeof window === 'object' && 'showOpenFilePicker' in window;
-  }  
+  }
 }

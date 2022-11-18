@@ -1,5 +1,6 @@
 import { appState, useAppState } from './app';
 import { editorState, useEditorState } from './editor';
+import { fileSystemState, useFileSystemState } from './file-system';
 import { parserState, useParserState } from './parser';
 import { settingsState, useSettingsState } from './settings';
 import { sidebarState, useSidebarState } from './sidebar';
@@ -14,6 +15,10 @@ const state = {
   // editor
   editor: editorState,
   useEditorState,
+
+  // fileSystem
+  fileSystem: fileSystemState,
+  useFileSystemState,
 
   // parser
   parser: parserState,

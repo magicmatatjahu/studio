@@ -3,25 +3,26 @@ import { VscChevronRight, VscChevronDown } from 'react-icons/vsc';
 
 import { IconButton } from '../IconButton';
 
-import type { ExpandedPanel as ExpandedPanelInterface } from './interfaces';
-
-interface ExpandedPanelProps extends ExpandedPanelInterface {}
+interface ExpandedPanelProps {
+  title: string;
+  opened?: boolean;
+  actions?: React.ReactNode[];
+}
 
 export const ExpandedPanel: React.FunctionComponent<ExpandedPanelProps> = (panel) => {
-  const { title, opened = false, component, actions } = panel;
+  const { title, opened = true, actions, children } = panel;
 
   const [open, setOpen] = useState(opened);
   const [hover, setHover] = useState(false);
-  const Component = component;
 
   return (
     <div 
-      className="flex flex-col" 
+      className="flex flex-col border-b border-gray-700" 
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
       <div 
-        className="flex flex-row items-center justify-between bg-gray-800 hover:bg-gray-700 border-b border-zinc-700 cursor-pointer text-xs leading-6 text-gray-300 pl-1 pr-2"
+        className="flex flex-row items-center justify-between bg-gray-800 hover:bg-gray-700 cursor-pointer text-xs leading-6 text-gray-300 pl-1 pr-2"
         onClick={(e) => {
           e.stopPropagation();
           setOpen(oldState => !oldState);
@@ -40,9 +41,9 @@ export const ExpandedPanel: React.FunctionComponent<ExpandedPanelProps> = (panel
         {actions ? (
           <div className={`flex-none ${hover ? 'block' : 'hidden'}`}>
             <ul className='flex flex-row items-center'>
-              {actions.map(action => (
-                <li className='flex flex-row items-center inline ml-0.5 text-sm' key={action.label} title={action.label}>
-                  <IconButton icon={action.icon} {...action.props?.(panel) || {}} />
+              {actions.map((action, idx) => (
+                <li className='flex flex-row items-center inline ml-1 text-sm' key={idx}>
+                  {action}
                 </li>
               ))}
             </ul>
@@ -51,7 +52,7 @@ export const ExpandedPanel: React.FunctionComponent<ExpandedPanelProps> = (panel
       </div>
       
       <div className={open ? 'block' : 'hidden'}>
-        <Component />
+        {children}
       </div>
     </div>
   );

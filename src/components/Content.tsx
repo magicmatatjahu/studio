@@ -3,6 +3,7 @@ import React from 'react';
 import SplitPane from './SplitPane';
 import { Editor } from './Editor/Editor';
 import { Navigation } from './Navigation';
+import { PrimarySidebar } from './Sidebars/PrimarySidebars/PrimarySidebar';
 import { Template } from './Template';
 import { NewFileModal, RedirectedModal } from './Modals';
 import { VisualiserTemplate } from './Visualiser';
@@ -41,7 +42,7 @@ export const Content: React.FunctionComponent<ContentProps> = () => { // eslint-
         localStorage.setItem(splitPosLeft, String(size));
       }, 100)}
     >
-      <Navigation />
+      <PrimarySidebar />
       <Editor />
     </SplitPane>
   );
