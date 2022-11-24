@@ -4,7 +4,6 @@ import specs from '@asyncapi/specs';
 import { loader } from '@monaco-editor/react';
 import { setDiagnosticsOptions } from 'monaco-yaml';
 
-import { SpecificationService } from './specification.service';
 import state from '../state';
 
 import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
@@ -12,25 +11,25 @@ import type { DiagnosticsOptions as YAMLDiagnosticsOptions } from 'monaco-yaml';
 import type { SpecVersions } from '../types';
 
 export class MonacoService extends AbstractService {
-  private static actualVersion = 'X.X.X';
-  private static Monaco: any = null;
-  private static Editor: any = null;
+  private actualVersion = 'X.X.X';
+  private Monaco: any = null;
+  private Editor: any = null;
 
-  static get monaco() {
-    return MonacoService.Monaco;
+  get monaco() {
+    return this.Monaco;
   }
-  static set monaco(value: any) {
-    MonacoService.Monaco = value;
-  }
-
-  static get editor() {
-    return MonacoService.Editor;
-  }
-  static set editor(value: any) {
-    MonacoService.Editor = value;
+  set monaco(value: any) {
+    this.Monaco = value;
   }
 
-  static updateLanguageConfig(version: SpecVersions = SpecificationService.getLastVersion()) {
+  get editor() {
+    return this.Editor;
+  }
+  set editor(value: any) {
+    this.Editor = value;
+  }
+
+  updateLanguageConfig(version: SpecVersions = this.svcs.specificationSvc.getLastVersion()) {
     if (version === this.actualVersion) {
       return;
     }
@@ -38,7 +37,7 @@ export class MonacoService extends AbstractService {
     this.actualVersion = version;
   }
 
-  static prepareLanguageConfig(
+  prepareLanguageConfig(
     asyncAPIVersion: SpecVersions,
   ): monacoAPI.languages.json.DiagnosticsOptions {
     const spec = { ...specs[String(asyncAPIVersion) as SpecVersions] };
@@ -65,7 +64,7 @@ export class MonacoService extends AbstractService {
     } as any;
   }
 
-  static loadLanguageConfig(asyncAPIVersion: SpecVersions) {
+  loadLanguageConfig(asyncAPIVersion: SpecVersions) {
     const monacoInstance = window.monaco;
     if (!monacoInstance) return;
 
@@ -81,7 +80,7 @@ export class MonacoService extends AbstractService {
     // yaml && yaml.yamlDefaults && yaml.yamlDefaults.setDiagnosticsOptions(options);
   }
 
-  static loadMonacoConfig() {
+  loadMonacoConfig() {
     const monacoInstance = window.monaco;
     if (!monacoInstance) return;
 
@@ -96,7 +95,7 @@ export class MonacoService extends AbstractService {
     });
   }
 
-  static async loadMonaco() {
+  async loadMonaco() {
     let monaco: typeof monacoAPI;
 
     // JEST cannot bundle monaco-editor in test environment so we need to fetch that package from cdn
@@ -113,7 +112,7 @@ export class MonacoService extends AbstractService {
     this.loadMonacoConfig();
     
     // load language config (for json and yaml)
-    this.loadLanguageConfig(SpecificationService.getLastVersion());
+    this.loadLanguageConfig(this.svcs.specificationSvc.getLastVersion());
     state.editor.monacoLoaded.set(true);
   }
 }

@@ -8,9 +8,6 @@ import { OpenAPISchemaParser } from '@asyncapi/parser/cjs/schema-parser/openapi-
 import { AvroSchemaParser } from '@asyncapi/parser/cjs/schema-parser/avro-schema-parser';
 import YAML from 'js-yaml';
 
-import { EditorService } from './editor.service';
-import { MonacoService } from './monaco.service';
-
 import state from '../state';
 
 import type { ConvertVersion } from '@asyncapi/converter';
@@ -28,15 +25,15 @@ parser.registerSchemaParser(OpenAPISchemaParser());
 parser.registerSchemaParser(AvroSchemaParser());
 
 export class SpecificationService extends AbstractService {
-  static getParsedSpec() {
+  getParsedSpec() {
     return window.ParsedSpec || null;
   }
 
-  static getParsedExtras() {
+  getParsedExtras() {
     return window.ParsedExtras || null;
   }
 
-  static async parseSpec(rawSpec: string): Promise<AsyncAPIDocument | void> {
+  async parseSpec(rawSpec: string): Promise<AsyncAPIDocument | void> {
     let diagnostics: Diagnostic[] = [];
 
     try {
@@ -55,7 +52,7 @@ export class SpecificationService extends AbstractService {
         });
   
         const version = oldDocument.version() as SpecVersions;
-        MonacoService.updateLanguageConfig(version);
+        this.svcs.monacoSvc.updateLanguageConfig(version);
         if (this.shouldInformAboutLatestVersion(version)) {
           state.spec.set({
             shouldOpenConvertModal: true,
@@ -64,7 +61,7 @@ export class SpecificationService extends AbstractService {
           });
         }
   
-        EditorService.applyMarkers(diagnostics);
+        this.svcs.editorSvc.applyMarkers(diagnostics);
         return oldDocument;
       } 
     } catch (err: unknown) {
@@ -76,7 +73,7 @@ export class SpecificationService extends AbstractService {
     window.ParsedExtras = undefined;
     try {
       const version = (YAML.load(rawSpec) as { asyncapi: SpecVersions }).asyncapi;
-      MonacoService.updateLanguageConfig(version);
+      this.svcs.monacoSvc.updateLanguageConfig(version);
     } catch (e: any) {
       // intentional
     }
@@ -87,10 +84,10 @@ export class SpecificationService extends AbstractService {
       diagnostics,
       hasErrorDiagnostics: true,
     });
-    EditorService.applyMarkers(diagnostics);
+    this.svcs.editorSvc.applyMarkers(diagnostics);
   }
 
-  static async convertSpec(
+  async convertSpec(
     spec: string,
     version: ConvertVersion = this.getLastVersion() as ConvertVersion,
   ): Promise<string> {
@@ -106,15 +103,15 @@ export class SpecificationService extends AbstractService {
     }
   }
 
-  static getSpecs() {
+  getSpecs() {
     return specs;
   }
 
-  static getLastVersion(): SpecVersions {
+  getLastVersion(): SpecVersions {
     return Object.keys(specs).pop() as SpecVersions;
   }
 
-  static shouldInformAboutLatestVersion(
+  shouldInformAboutLatestVersion(
     version: string,
   ): boolean {
     const oneDay = 24 * 60 * 60 * 1000; /* ms */
@@ -137,7 +134,7 @@ export class SpecificationService extends AbstractService {
     return false;
   }
 
-  static getRangeForJsonPath(jsonPath: string | Array<string | number>) {
+  getRangeForJsonPath(jsonPath: string | Array<string | number>) {
     try {
       const extras = this.getParsedExtras();
       if (extras) {
@@ -150,7 +147,7 @@ export class SpecificationService extends AbstractService {
     }
   }
 
-  static filterDiagnostics(diagnostics: Diagnostic[] = state.parser.diagnostics.get()) {
+  filterDiagnostics(diagnostics: Diagnostic[] = state.parser.diagnostics.get()) {
     const governanceShowState = state.settings.governance.show.get();
     return diagnostics.filter(({ severity }) => {
       return (
