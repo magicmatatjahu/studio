@@ -11,7 +11,7 @@ export type PanelsState = {
     secondaryPanel: boolean;
     contextPanel: boolean;
   };
-  // TODO: remove when dynamic panels will be introduced 
+  // TODO: remove when panels tabs will be introduced 
   secondaryPanelType: 'template' | 'visualiser';
 }
 

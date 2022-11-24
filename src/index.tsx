@@ -1,6 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { Provider as ModalManagerProvider } from '@ebay/nice-modal-react';
+
+import { createServices, ServicesProvider } from './services';
 import App from './App';
 
 import 'tippy.js/dist/tippy.css';
@@ -24,22 +27,27 @@ function configureMonaco() {
       case 'yml':
         return new Worker(new URL('monaco-yaml/yaml.worker', import.meta.url));
       default:
-        throw new Error(`Unknown label ${label}`);
+        throw new Error(`Unknown worker ${label}`);
       }
     },
   };
 }
 
-function bootstrap() {
+async function bootstrap() {
   configureMonaco();
+  const services = await createServices();
 
   const root = createRoot(
-    document.getElementById('root') as HTMLElement
+    document.getElementById('root') as HTMLElement,
   );
 
   root.render(
     <StrictMode>
-      <App />
+      <ServicesProvider value={services}>
+        <ModalManagerProvider>
+          <App />
+        </ModalManagerProvider>
+      </ServicesProvider>
     </StrictMode>
   );
 }

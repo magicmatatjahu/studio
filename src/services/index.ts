@@ -4,6 +4,7 @@ import { EditorService } from './editor.service';
 import { FormatService } from './format.service';
 import { MonacoService } from './monaco.service';
 import { NavigationService } from './navigation.service';
+import { ParserService } from './parser.service';
 import { ServerAPIService } from './server-api.service';
 import { SocketClient } from './socket-client.service';
 import { SpecificationService } from './specification.service';
@@ -13,6 +14,7 @@ export type Services = {
   formatSvc: FormatService;
   monacoSvc: MonacoService;
   navigationSvc: NavigationService;
+  parserSvc: ParserService;
   serverAPISvc: ServerAPIService;
   socketClientSvc: SocketClient;
   specificationSvc: SpecificationService;
@@ -33,6 +35,7 @@ export async function createServices() {
   services.formatSvc = new FormatService(services);
   services.monacoSvc = new MonacoService(services);
   services.navigationSvc = new NavigationService(services);
+  services.parserSvc = new ParserService(services);
   services.serverAPISvc = new ServerAPIService(services);
   services.socketClientSvc = new SocketClient(services);
   services.specificationSvc = new SpecificationService(services);
