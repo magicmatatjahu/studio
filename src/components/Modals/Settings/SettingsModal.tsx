@@ -119,7 +119,7 @@ export const SettingsModal: React.FunctionComponent = () => {
       }
     });
 
-    editorSvc.applyMarkers(state.parser.diagnostics.get());
+    // editorSvc.applyMarkers(state.parser.diagnostics.get());
     setConfirmDisabled(true);
     toast.success(
       <div>
@@ -223,7 +223,7 @@ export const SettingsModal: React.FunctionComponent = () => {
   ];
   return (
     <ConfirmModal
-      title={'Studio settings'}
+      title='Studio settings'
       confirmText="Save"
       confirmDisabled={confirmDisabled}
       show={settingsState.showModal.get()}

@@ -1,6 +1,5 @@
 import { AbstractService } from './abstract.service';
 
-import specs from '@asyncapi/specs';
 import { loader } from '@monaco-editor/react';
 import { setDiagnosticsOptions } from 'monaco-yaml';
 
@@ -11,6 +10,9 @@ import type { DiagnosticsOptions as YAMLDiagnosticsOptions } from 'monaco-yaml';
 import type { SpecVersions } from '../types';
 
 export class MonacoService extends AbstractService {
+  private jsonSchemaSpecs: Map<string, any> = new Map();
+  private jsonSchemaDefinitions: monacoAPI.languages.json.DiagnosticsOptions['schemas'] = [];
+
   private actualVersion = 'X.X.X';
   private Monaco: any = null;
   private Editor: any = null;
@@ -20,8 +22,10 @@ export class MonacoService extends AbstractService {
     await this.loadMonaco();
     // set monaco theme
     this.setMonacoTheme();
+    // prepare JSON Schema specs and definitions for JSON/YAML language config
+    this.prepareJSONSchemas()
     // load initial language config (for json and yaml)
-    this.setLanguageConfig(this.svcs.specificationSvc.getLastVersion());
+    this.setLanguageConfig(this.svcs.specificationSvc.latestVersion);
     // update state
     state.editor.monacoLoaded.set(true);
   }
@@ -40,7 +44,7 @@ export class MonacoService extends AbstractService {
     this.Editor = value;
   }
 
-  updateLanguageConfig(version: SpecVersions = this.svcs.specificationSvc.getLastVersion()) {
+  updateLanguageConfig(version: SpecVersions = this.svcs.specificationSvc.latestVersion) {
     if (version === this.actualVersion) {
       return;
     }
@@ -48,15 +52,23 @@ export class MonacoService extends AbstractService {
     this.actualVersion = version;
   }
 
-  prepareLanguageConfig(
-    asyncAPIVersion: SpecVersions,
+  private setLanguageConfig(asyncAPIVersion: SpecVersions) {
+    const monaco = this.monaco;
+    if (!monaco) return;
+    const options = this.prepareLanguageConfig(asyncAPIVersion);
+
+    // json
+    const json = monaco.languages.json;
+    json && json.jsonDefaults && json.jsonDefaults.setDiagnosticsOptions(options);
+
+    // yaml
+    setDiagnosticsOptions(options as YAMLDiagnosticsOptions);
+  }
+
+  private prepareLanguageConfig(
+    version: SpecVersions,
   ): monacoAPI.languages.json.DiagnosticsOptions {
-    const spec = { ...specs[String(asyncAPIVersion) as SpecVersions] };
-    const definitions = Object.entries(spec.definitions || {}).map(([uri, schema]) => ({
-      uri,
-      schema,
-    }));
-    delete spec.definitions;
+    const spec = this.jsonSchemaSpecs.get(version);
 
     return {
       enableSchemaRequest: true,
@@ -67,43 +79,29 @@ export class MonacoService extends AbstractService {
       schemas: [
         {
           uri: spec.$id, // id of the AsyncAPI spec schema
-          fileMatch: ['*'], // associate with all models
+          fileMatch: ['asyncapi'], // associate with all models
           schema: spec,
         },
-        ...definitions,
+        ...this.jsonSchemaDefinitions!,
       ],
     } as any;
   }
 
   private async loadMonaco() {
-    // We don't need test monaco instance in test env
+    // in test environment we don't need monaco loaded
     if (process.env.NODE_ENV === 'test') {
       return;
     }
     
-    const monaco = window.monaco = await import('monaco-editor');
+    const monaco = this.monaco = window.monaco = await import('monaco-editor');
     loader.config({ monaco });
   }
 
-  private setLanguageConfig(asyncAPIVersion: SpecVersions) {
-    const monacoInstance = window.monaco;
-    if (!monacoInstance) return;
-
-    const options = this.prepareLanguageConfig(asyncAPIVersion);
-
-    // json
-    const json = monacoInstance.languages.json;
-    json && json.jsonDefaults && json.jsonDefaults.setDiagnosticsOptions(options);
-
-    // yaml
-    setDiagnosticsOptions(options as YAMLDiagnosticsOptions);
-  }
-
   private setMonacoTheme() {
-    const monacoInstance = window.monaco;
-    if (!monacoInstance) return;
+    const monaco = this.monaco;
+    if (!monaco) return;
 
-    monacoInstance.editor.defineTheme('asyncapi-theme', {
+    monaco.editor.defineTheme('asyncapi-theme', {
       base: 'vs-dark',
       inherit: true,
       colors: {
@@ -111,6 +109,25 @@ export class MonacoService extends AbstractService {
         'editor.lineHighlightBackground': '#1f2a37',
       },
       rules: [{ token: '', background: '#252f3f' }],
+    });
+  }
+
+  private prepareJSONSchemas() {
+    const uris: string[] = [];
+    Object.entries(this.svcs.specificationSvc.specs).forEach(([version, spec]) => {
+      const copiedSpec = { ...spec };
+      const definitions = Object.entries(copiedSpec.definitions || {}).map(([uri, schema]) => ({
+        uri,
+        schema,
+      }));
+      delete copiedSpec.definitions;
+      this.jsonSchemaSpecs.set(version, copiedSpec);
+
+      definitions.forEach(d => {
+        if (uris.includes(d.uri)) return;
+        uris.push(d.uri);
+        this.jsonSchemaDefinitions!.push(d);
+      });
     });
   }
 }

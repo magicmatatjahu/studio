@@ -4,24 +4,19 @@ import { VscListSelection, VscCode, VscOpenPreview, VscGraph, VscNewFile } from 
 import { Tooltip } from './common';
 import { SettingsModal } from './Modals/Settings/SettingsModal';
 
-import state from '../state';
+import { usePanelsState, panelsState } from '../state/new';
 
-type NavItemType = 'navigation' | 'editor' | 'template' | 'visualiser';
+import type { PanelsState } from '../state/new/panels.state';
 
-function setActiveNav(navItem: NavItemType) {
-  const panels = state.sidebar.panels;
-  const panelsState = panels.get();
-
-  const newState = {
-    ...panelsState,
-  };
+function updateState(navItem: PanelsState['show']) {
+  let { show, secondaryPanelType } = panelsState.getState();
 
   if (navItem === 'template' || navItem === 'visualiser') {
     // on current type
-    if (newState.viewType === navItem) {
-      newState.view = !newState.view;
+    if (secondaryPanelType === navItem) {
+      show[] = !newState.view;
     } else {
-      newState.viewType = navItem;
+      secondaryPanelType = navItem;
       if (newState.view === false) {
         newState.view = true;
       }
@@ -45,13 +40,16 @@ function setActiveNav(navItem: NavItemType) {
     return;
   }
 
-  panels.set(newState);
+  panelsState.setState({
+    show: { ...show },
+    secondaryPanelType,
+  })
 }
 
 interface NavItem {
-  name: string;
+  name: NavItemType;
   title: string;
-  isActive: () => boolean;
+  isActive: boolean,
   icon: React.ReactNode;
   tooltip: React.ReactNode;
 }
@@ -59,26 +57,26 @@ interface NavItem {
 interface SidebarProps {}
 
 export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
-  const sidebarState = state.useSidebarState();
+  const { show, secondaryPanelType } = usePanelsState();
 
-  if (sidebarState.show.get() === false) {
+  if (show.activityBar === false) {
     return null;
   }
 
   const navigation: NavItem[] = [
     // navigation
     {
-      name: 'navigation',
+      name: 'primarySidebar',
       title: 'Navigation',
-      isActive: () => sidebarState.panels.navigation.get(),
+      isActive: show.primarySidebar,
       icon: <VscListSelection className="w-5 h-5" />,
       tooltip: 'Navigation',
     },
     // editor
     {
-      name: 'editor',
+      name: 'primaryPanel',
       title: 'Editor',
-      isActive: () => sidebarState.panels.editor.get(),
+      isActive: show.primaryPanel,
       icon: <VscCode className="w-5 h-5" />,
       tooltip: 'Editor',
     },
@@ -86,7 +84,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
     {
       name: 'template',
       title: 'Template',
-      isActive: () => sidebarState.panels.view.get() && sidebarState.panels.viewType.get() === 'template',
+      isActive: show.secondaryPanel && secondaryPanelType === 'template',
       icon: <VscOpenPreview className="w-5 h-5" />,
       tooltip: 'HTML preview',
     },
@@ -94,7 +92,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
     {
       name: 'visualiser',
       title: 'Visualiser',
-      isActive: () => sidebarState.panels.view.get() && sidebarState.panels.viewType.get() === 'visualiser',
+      isActive: show.secondaryPanel && secondaryPanelType === 'visualiser',
       icon: <VscGraph className="w-5 h-5" />,
       tooltip: 'Blocks visualiser',
     },
@@ -102,7 +100,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
     {
       name: 'newFile',
       title: 'New file',
-      isActive: () => false,
+      isActive: false,
       icon: <VscNewFile className="w-5 h-5" />,
       tooltip: 'New file',
     },
@@ -115,11 +113,11 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
           <Tooltip content={item.tooltip} placement='right' hideOnClick={true} key={item.name}>
             <button
               title={item.title}
-              onClick={() => setActiveNav(item.name as NavItemType)}
+              onClick={() => updateState(item.name)}
               className={'flex text-sm focus:outline-none border-box p-2'}
               type="button"
             >
-              <div className={item.isActive() ? 'bg-gray-600 p-2 rounded text-white' : 'p-2 text-gray-500 hover:text-white'}>
+              <div className={item.isActive ? 'bg-gray-600 p-2 rounded text-white' : 'p-2 text-gray-500 hover:text-white'}>
                 {item.icon}
               </div>
             </button>

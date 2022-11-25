@@ -5,6 +5,7 @@ import { DiagnosticSeverity } from '@asyncapi/parser/cjs';
 import { Tooltip } from '../common';
 import { useServices } from '../../services';
 import { debounce } from '../../helpers';
+import { useDocumentsState } from '../../state/new';
 import state from '../../state';
 
 import type { FunctionComponent } from 'react';
@@ -13,18 +14,13 @@ import type { Diagnostic } from '@asyncapi/parser/cjs';
 interface ProblemsTabProps {}
 
 export const ProblemsTab: FunctionComponent<ProblemsTabProps> = () => {
-  const { specificationSvc } = useServices();
-  const governanceShowState = state.useSettingsState().governance.show.get();
-  const diagnostics = state.useParserState().diagnostics.get();
+  const { parserSvc } = useServices();
+  const diagnostics = useDocumentsState(state => state.documents['asyncapi'].diagnostics);
 
-  const filteredDiagnostics = useMemo(() => {
-    return specificationSvc.filterDiagnostics();
-  }, [diagnostics, governanceShowState.warnings, governanceShowState.informations, governanceShowState.hints]);
-
-  const errorDiagnostics = filteredDiagnostics.filter(diagnostic => diagnostic.severity === 0);
-  const warningDiagnostics = filteredDiagnostics.filter(diagnostic => diagnostic.severity === 1);
-  const infoDiagnostics = filteredDiagnostics.filter(diagnostic => diagnostic.severity === 2);
-  const hintDiagnostics = filteredDiagnostics.filter(diagnostic => diagnostic.severity === 3);
+  const errorDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Error);
+  const warningDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Warning);
+  const infoDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Information);
+  const hintDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Hint);
 
   return (
     <div className='flex flex-row items-center'>
@@ -92,10 +88,6 @@ const SeverityIcon: React.FunctionComponent<SeverityIconProps> = ({ severity }) 
   }
 };
 
-function filterDiagnostics(diagnostics: Diagnostic[], severity: DiagnosticSeverity) {
-  return diagnostics.filter(diagnostic => diagnostic.severity === severity);
-}
-
 function createProperMessage(
   disabled: boolean,
   active: DiagnosticSeverity[],
@@ -120,18 +112,19 @@ function createProperMessage(
 }
 
 interface SeverityButtonsProps {
-  diagnostics: Diagnostic[];
   active: DiagnosticSeverity[];
   setActive: (severity: DiagnosticSeverity) => void;
 }
 
-const SeverityButtons: FunctionComponent<SeverityButtonsProps> = ({ diagnostics, active, setActive }) => {
+const SeverityButtons: FunctionComponent<SeverityButtonsProps> = ({ active, setActive }) => {
+  const { parserSvc } = useServices();
+  const diagnostics = useDocumentsState(state => state.documents['asyncapi'].diagnostics);
   const governanceShowState = state.useSettingsState().governance.show.get();
 
-  const errorDiagnostics = filterDiagnostics(diagnostics, DiagnosticSeverity.Error);
-  const warningDiagnostics = filterDiagnostics(diagnostics, DiagnosticSeverity.Warning);
-  const infoDiagnostics = filterDiagnostics(diagnostics, DiagnosticSeverity.Information);
-  const hintDiagnostics = filterDiagnostics(diagnostics, DiagnosticSeverity.Hint);
+  const errorDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Error);
+  const warningDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Warning);
+  const infoDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Information);
+  const hintDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Hint);
 
   const errorsTooltip = createProperMessage(false, active, DiagnosticSeverity.Error, 'Show errors', 'Hide errors', 'Show only errors');
   const warningsTooltip = createProperMessage(!governanceShowState.warnings, active, DiagnosticSeverity.Warning, 'Show warnings', 'Hide warnings', 'Show only warnings');
@@ -207,11 +200,10 @@ const SeverityButtons: FunctionComponent<SeverityButtonsProps> = ({ diagnostics,
 };
 
 export const ProblemsTabContent: FunctionComponent<ProblemsTabProps> = () => {
-  const { specificationSvc, navigationSvc } = useServices();
+  const { navigationSvc } = useServices();
+  const diagnostics = useDocumentsState(state => state.documents['asyncapi'].diagnostics);
+
   const settingsState = state.useSettingsState();
-  const governanceShowState = settingsState.governance.show.get();
-  const parserState = state.useParserState();
-  const diagnostics = parserState.diagnostics.get();
 
   const [active, setActive] = useState<Array<DiagnosticSeverity>>([]);
   const [search, setSearch] = useState<string>('');
@@ -226,12 +218,8 @@ export const ProblemsTabContent: FunctionComponent<ProblemsTabProps> = () => {
     });
   }, [setActive]);
 
-  const restrictedDiagnostics = useMemo(() => {
-    return specificationSvc.filterDiagnostics();
-  }, [diagnostics, governanceShowState.warnings, governanceShowState.informations, governanceShowState.hints]);
-
   const filteredDiagnostics = useMemo(() => {
-    return restrictedDiagnostics.filter(diagnostic => {
+    return diagnostics.filter(diagnostic => {
       const { severity, message } = diagnostic;
 
       if (active.length && !active.some(s => s === severity)) {
@@ -241,13 +229,13 @@ export const ProblemsTabContent: FunctionComponent<ProblemsTabProps> = () => {
       const lowerCasingSearch = search.toLowerCase();
       return !(lowerCasingSearch && !message.toLowerCase().includes(lowerCasingSearch));
     });
-  }, [restrictedDiagnostics, search]);
+  }, [diagnostics, search]);
 
   return (
     <div className="flex-1 text-white text-xs h-full relative overflow-x-hidden overflow-y-auto">
       <div className="px-4 pt-2">
         <div className='pb-2 flex flex-row items-center'>
-          <SeverityButtons diagnostics={restrictedDiagnostics} active={active} setActive={setActiveFn} />
+          <SeverityButtons active={active} setActive={setActiveFn} />
           <div className='ml-2 flex-1 flex flex-row items-center justify-center rounded-md border border-transparent shadow-xs px-2 py-1 bg-gray-700 text-xs font-medium'>
             <VscSearch />
             <input ref={inputRef} placeholder='Filter diagnostics...' className='w-full bg-gray-700 border-transparent ml-2 focus:border-transparent focus:ring-0 focus:outline-none' onChange={debounce((e) => setSearch(e.target.value), 250)} />

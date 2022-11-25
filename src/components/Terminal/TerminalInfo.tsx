@@ -15,7 +15,7 @@ export const TerminalInfo: React.FunctionComponent<TerminalInfoProps> = () => {
 
   const liveServer = appState.liveServer.get();
   const actualVersion = parserState.parsedSpec.get()?.version() || '2.0.0';
-  const latestVersion = specificationSvc.getLastVersion();
+  const latestVersion = specificationSvc.latestVersion;
   const documentValid = parserState.valid.get();
   const hasErrorDiagnostics = parserState.hasErrorDiagnostics.get();
   const autoSaving = settingsState.editor.autoSaving.get();

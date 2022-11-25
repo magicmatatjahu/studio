@@ -13,7 +13,7 @@ export type MonacoWrapperProps = MonacoEditorProps
 export const MonacoWrapper: React.FunctionComponent<MonacoWrapperProps> = ({
   ...props
 }) => {
-  const { editorSvc, specificationSvc } = useServices();
+  const { editorSvc, parserSvc } = useServices();
   const editorState = state.useEditorState();
   const settingsState = state.useSettingsState();
   const autoSaving = settingsState.editor.autoSaving.get();
@@ -25,7 +25,7 @@ export const MonacoWrapper: React.FunctionComponent<MonacoWrapperProps> = ({
     // save editor instance to the window
     window.Editor = editor;
     // parse on first run the spec
-    specificationSvc.parseSpec(editorSvc.getValue());
+    parserSvc.parse('asyncapi', editorSvc.getValue());
 
     // apply save command
     editor.addCommand(
@@ -40,11 +40,12 @@ export const MonacoWrapper: React.FunctionComponent<MonacoWrapperProps> = ({
   const onChange = debounce((v: string) => {
     editorSvc.updateState({ content: v });
     autoSaving && editorSvc.saveToLocalStorage(v, false);
-    specificationSvc.parseSpec(v);
+    parserSvc.parse('asyncapi', v);
   }, savingDelay);
 
   return editorState.monacoLoaded.get() ? (
     <MonacoEditor
+      defaultPath='asyncapi'
       language={editorState.language.get()}
       defaultValue={editorState.editorValue.get()}
       theme="asyncapi-theme"

@@ -4,20 +4,21 @@ import { ConfirmModal } from './index';
 
 import { useServices } from '../../services';
 import state from '../../state';
+import { SpecVersions } from '../../types';
 
 export const ConvertModal: React.FunctionComponent = () => {
-  const [version, setVersion] = useState('');
+  const [version, setVersion] = useState<SpecVersions | ''>('');
   
   const { editorSvc, specificationSvc } = useServices();
   const parserState = state.useParserState();
   const actualVersion = parserState.parsedSpec.get()?.version();
-  const latestVersion = specificationSvc.getLastVersion();
-  const allowedVersions = Object.keys(specificationSvc.getSpecs());
+  const latestVersion = specificationSvc.latestVersion;
+  const allowedVersions = Object.keys(specificationSvc.specs);
   actualVersion && (allowedVersions.splice(0, allowedVersions.indexOf(actualVersion) + 1));
   const reservedAllowedVersions = [...allowedVersions].reverse();
 
   const onSubmit = () => {
-    toast.promise(editorSvc.convertSpec(version), {
+    toast.promise(editorSvc.convertSpec(version as SpecVersions), {
       loading: 'Converting...',
       success: (
         <div>
@@ -64,7 +65,7 @@ export const ConvertModal: React.FunctionComponent = () => {
             <select
               name="asyncapi-version"
               className="shadow-sm focus:ring-pink-500 focus:border-pink-500 w-1/2 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-1 text-gray-700 border-pink-300 border-2"
-              onChange={e => setVersion(e.target.value)}
+              onChange={e => setVersion(e.target.value as SpecVersions)}
               value={version}
             >
               <option value="">Please Select</option>

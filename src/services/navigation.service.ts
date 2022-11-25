@@ -22,7 +22,7 @@ export class NavigationService extends AbstractService {
 
     const isReadonly = this.isReadOnly(true);
     if (isReadonly) {
-      await this.svcs.specificationSvc.parseSpec(state.editor.editorValue.get());
+      await this.svcs.parserSvc.parse('asyncapi', state.editor.editorValue.get());
       state.sidebar.show.set(false);
       state.editor.merge({
         monacoLoaded: true,
@@ -42,7 +42,7 @@ export class NavigationService extends AbstractService {
     hash: string,
   ) {
     try {
-      const range = this.svcs.specificationSvc.getRangeForJsonPath(jsonPointer);
+      const range = this.svcs.parserSvc.getRangeForJsonPath('asyncapi', jsonPointer);
       if (range) {
         this.scrollToEditorLine(range.start.line + 1);
       }

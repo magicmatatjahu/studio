@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AsyncApiComponentWP } from '@asyncapi/react-component';
 
 import { useServices } from '../../services';
+import { useDocumentsState } from '../../state/new';
 import state from '../../state';
 
 import type { OldAsyncAPIDocument as AsyncAPIDocument } from '@asyncapi/parser/cjs';
@@ -10,6 +11,7 @@ interface HTMLWrapperProps {}
 
 export const HTMLWrapper: React.FunctionComponent<HTMLWrapperProps> = () => {
   const [parsedSpec, setParsedSpec] = useState<AsyncAPIDocument | null>(null);
+  const document = useDocumentsState(state => state.documents['asyncapi']);
 
   const { navigationSvc, specificationSvc } = useServices();
   const appState = state.useAppState();
@@ -30,13 +32,13 @@ export const HTMLWrapper: React.FunctionComponent<HTMLWrapperProps> = () => {
 
   useEffect(() => {
     if (autoRendering || parsedSpec === null) {
-      setParsedSpec(specificationSvc.getParsedSpec());
+      setParsedSpec(document?.document || null);
     }
   }, [parserState.parsedSpec.get()]); // eslint-disable-line
 
   useEffect(() => {
     if (templateState.rerender.get()) {
-      setParsedSpec(specificationSvc.getParsedSpec());
+      setParsedSpec(document?.document || null);
       templateState.rerender.set(false);
     }
   }, [templateState.rerender.get()]); // eslint-disable-line

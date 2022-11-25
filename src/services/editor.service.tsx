@@ -6,10 +6,11 @@ import toast from 'react-hot-toast';
 import fileDownload from 'js-file-download';
 
 import state from '../state';
+import { documentsState } from '../state/new';
 
 import type * as monacoAPI from 'monaco-editor/esm/vs/editor/editor.api';
 import type { Diagnostic } from '@asyncapi/parser/cjs';
-import type { ConvertVersion } from '@asyncapi/converter';
+import type { SpecVersions } from '../types';
 
 export type AllowedLanguages = 'json' | 'yaml' | 'yml';
 
@@ -21,6 +22,12 @@ export interface UpdateState {
 } 
 
 export class EditorService extends AbstractService {
+  private decorations: Map<string, string[]> = new Map();
+
+  onInit() {
+    this.subcribeToDocuments();
+  }
+
   getInstance(): monacoAPI.editor.IStandaloneCodeEditor {
     return window.Editor;
   }
@@ -80,10 +87,10 @@ export class EditorService extends AbstractService {
     });
   }
 
-  async convertSpec(version?: string) {
-    const converted = await this.svcs.specificationSvc.convertSpec(
+  async convertSpec(version?: SpecVersions) {
+    const converted = await this.svcs.converterSvc.convert(
       this.getValue(),
-      (version || this.svcs.specificationSvc.getLastVersion()) as ConvertVersion,
+      (version || this.svcs.specificationSvc.latestVersion),
     );
     this.updateState({ content: converted, updateModel: true });
   }
@@ -204,7 +211,7 @@ export class EditorService extends AbstractService {
     return localStorage.getItem('document');
   }
 
-  applyMarkers(diagnostics: Diagnostic[] = []) {
+  private applyMarkersAndDecorations(diagnostics: Diagnostic[] = []) {
     const editor = this.getInstance();
     const Monaco = window.monaco;
     if (!editor || !Monaco) {
@@ -216,19 +223,14 @@ export class EditorService extends AbstractService {
       return;
     }
 
-    diagnostics = this.svcs.specificationSvc.filterDiagnostics(diagnostics);
-    const { markers, decorations } = this.createMarkers(diagnostics);
+    const { markers, decorations } = this.createMarkersAndDecorations(diagnostics);
     Monaco.editor.setModelMarkers(model, 'asyncapi', markers);
-    let oldDecorations = state.editor.decorations.get();
-    if (oldDecorations.length === 0) {
-      oldDecorations = [];
-    }
+    let oldDecorations = this.decorations.get('asyncapi') || [];
     oldDecorations = editor.deltaDecorations(oldDecorations, decorations);
-    state.editor.decorations.set(oldDecorations || []);
+    this.decorations.set('asyncapi', oldDecorations);
   }
 
-  createMarkers(diagnostics: Diagnostic[]) {
-    diagnostics = diagnostics || [];
+  createMarkersAndDecorations(diagnostics: Diagnostic[] = []) {
     const newDecorations: monacoAPI.editor.IModelDecoration[] = [];
     const newMarkers: monacoAPI.editor.IMarkerData[] = [];
 
@@ -288,5 +290,18 @@ export class EditorService extends AbstractService {
   private fileName = 'asyncapi';
   private downloadFile(content: string, fileName: string) {
     return fileDownload(content, fileName);
+  }
+
+  private subcribeToDocuments() {
+    documentsState.subscribe((state, prevState) => {
+      const newDocuments = state.documents;
+      const oldDocuments = prevState.documents;
+
+      Object.entries(newDocuments).forEach(([uri, document]) => {
+        const oldDocument = oldDocuments[uri];
+        if (document === oldDocument) return;
+        this.applyMarkersAndDecorations(document.diagnostics);
+      })
+    });
   }
 }

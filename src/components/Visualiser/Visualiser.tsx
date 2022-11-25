@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 import { FlowDiagram } from './FlowDiagram';
 
-import { useServices } from '../../services';
+import { useDocumentsState } from '../../state/new';
 import state from '../../state';
 
 import type { OldAsyncAPIDocument as AsyncAPIDocument } from '@asyncapi/parser/cjs';
@@ -12,8 +12,8 @@ interface VisualiserProps {}
 
 export const Visualiser: FunctionComponent<VisualiserProps> = () => {
   const [parsedSpec, setParsedSpec] = useState<AsyncAPIDocument | null>(null);
+  const document = useDocumentsState(state => state.documents['asyncapi']);
 
-  const { specificationSvc } = useServices();
   const parserState = state.useParserState();
   const editorState = state.useEditorState();
   const templateState = state.useTemplateState();
@@ -25,13 +25,13 @@ export const Visualiser: FunctionComponent<VisualiserProps> = () => {
 
   useEffect(() => {
     if (autoRendering || parsedSpec === null) {
-      setParsedSpec(specificationSvc.getParsedSpec());
+      setParsedSpec(document?.document || null);
     }
   }, [parserState.parsedSpec]); // eslint-disable-line
 
   useEffect(() => {
     if (templateState.rerender.get()) {
-      setParsedSpec(specificationSvc.getParsedSpec());
+      setParsedSpec(document?.document || null);
       templateState.rerender.set(false);
     }
   }, [templateState.rerender.get()]); // eslint-disable-line
