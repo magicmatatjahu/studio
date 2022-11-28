@@ -8,48 +8,39 @@ import { usePanelsState, panelsState } from '../state/new';
 
 import type { PanelsState } from '../state/new/panels.state';
 
-function updateState(navItem: PanelsState['show']) {
+function updateState(panelName: keyof PanelsState['show'], type?: PanelsState['secondaryPanelType']) {
   let { show, secondaryPanelType } = panelsState.getState();
+  const newShow = { ...show };
 
-  if (navItem === 'template' || navItem === 'visualiser') {
+  if (type === 'template' || type === 'visualiser') {
     // on current type
-    if (secondaryPanelType === navItem) {
-      show[] = !newState.view;
+    if (secondaryPanelType === type) {
+      newShow[panelName] = !newShow[panelName];
     } else {
-      secondaryPanelType = navItem;
-      if (newState.view === false) {
-        newState.view = true;
+      secondaryPanelType = type;
+      if (newShow[panelName] === false) {
+        newShow[panelName] = true;
       }
     }
   } else {
-    newState[`${navItem}`] = !newState[`${navItem}`];
+    newShow[panelName] = !newShow[panelName];
   }
 
-  if (newState.navigation && !newState.editor && !newState.view) {
-    panels.set({
-      ...newState,
-      view: true,
-    });
-    return;
-  }
-  if (!Object.values(newState).some(itemNav => itemNav === true)) {
-    panels.set({
-      ...newState,
-      view: true,
-    });
-    return;
+  if (!newShow.primaryPanel && !newShow.secondaryPanel) {
+    newShow.secondaryPanel = true;
   }
 
   panelsState.setState({
-    show: { ...show },
+    show: { ...newShow },
     secondaryPanelType,
   })
 }
 
 interface NavItem {
-  name: NavItemType;
+  name: string;
   title: string;
   isActive: boolean,
+  updateState?: () => void;
   icon: React.ReactNode;
   tooltip: React.ReactNode;
 }
@@ -69,6 +60,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
       name: 'primarySidebar',
       title: 'Navigation',
       isActive: show.primarySidebar,
+      updateState: () => updateState('primarySidebar'),
       icon: <VscListSelection className="w-5 h-5" />,
       tooltip: 'Navigation',
     },
@@ -77,6 +69,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
       name: 'primaryPanel',
       title: 'Editor',
       isActive: show.primaryPanel,
+      updateState: () => updateState('primaryPanel'),
       icon: <VscCode className="w-5 h-5" />,
       tooltip: 'Editor',
     },
@@ -85,6 +78,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
       name: 'template',
       title: 'Template',
       isActive: show.secondaryPanel && secondaryPanelType === 'template',
+      updateState: () => updateState('secondaryPanel', 'template'),
       icon: <VscOpenPreview className="w-5 h-5" />,
       tooltip: 'HTML preview',
     },
@@ -93,6 +87,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
       name: 'visualiser',
       title: 'Visualiser',
       isActive: show.secondaryPanel && secondaryPanelType === 'visualiser',
+      updateState: () => updateState('secondaryPanel', 'visualiser'),
       icon: <VscGraph className="w-5 h-5" />,
       tooltip: 'Blocks visualiser',
     },
@@ -101,6 +96,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
       name: 'newFile',
       title: 'New file',
       isActive: false,
+      updateState: () => panelsState.setState({ newFileOpened: true }),
       icon: <VscNewFile className="w-5 h-5" />,
       tooltip: 'New file',
     },
@@ -113,7 +109,7 @@ export const Sidebar: React.FunctionComponent<SidebarProps> = () => {
           <Tooltip content={item.tooltip} placement='right' hideOnClick={true} key={item.name}>
             <button
               title={item.title}
-              onClick={() => updateState(item.name)}
+              onClick={() => item.updateState?.()}
               className={'flex text-sm focus:outline-none border-box p-2'}
               type="button"
             >

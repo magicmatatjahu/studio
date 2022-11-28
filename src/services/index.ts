@@ -7,6 +7,7 @@ import { MonacoService } from './monaco.service';
 import { NavigationService } from './navigation.service';
 import { ParserService } from './parser.service';
 import { ServerAPIService } from './server-api.service';
+import { SettingsService } from './settings.service';
 import { SocketClient } from './socket-client.service';
 import { SpecificationService } from './specification.service';
 
@@ -18,6 +19,7 @@ export type Services = {
   navigationSvc: NavigationService;
   parserSvc: ParserService;
   serverAPISvc: ServerAPIService;
+  settingsSvc: SettingsService;
   socketClientSvc: SocketClient;
   specificationSvc: SpecificationService;
 }
@@ -40,6 +42,7 @@ export async function createServices() {
   services.navigationSvc = new NavigationService(services);
   services.parserSvc = new ParserService(services);
   services.serverAPISvc = new ServerAPIService(services);
+  services.settingsSvc = new SettingsService(services);
   services.socketClientSvc = new SocketClient(services);
   services.specificationSvc = new SpecificationService(services);
 

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { ConfirmModal } from './index';
 import examples from '../../examples';
 import { useServices } from '../../services';
-import state from '../../state';
+import { usePanelsState, panelsState } from '../../state/new';
 
 interface TemplateListItemProps {
   title: string;
@@ -34,13 +34,12 @@ const TemplateListItem: React.FunctionComponent<TemplateListItemProps> = ({ titl
 
 export const NewFileModal: React.FunctionComponent = () => {
   const { editorSvc } = useServices();
-  const sidebarState = state.useSidebarState();
-  const newFileEnabled = sidebarState.panels.newFile.get();
+  const newFileOpened = usePanelsState(state => state.newFileOpened);
   const [selectedTemplate, setSelectedTemplate] = useState({ title: '', template: '' });
 
   const onSubmit = () => {
     editorSvc.updateState({ content: selectedTemplate.template, updateModel: true });
-    sidebarState.panels.newFile.set(false);
+    panelsState.setState({ newFileOpened: false });
     setSelectedTemplate({ title: '', template: '' });
 
     toast.success(
@@ -51,7 +50,7 @@ export const NewFileModal: React.FunctionComponent = () => {
   };
 
   const onCancel = () => {
-    sidebarState.panels.newFile.set(false);
+    panelsState.setState({ newFileOpened: false });
     setSelectedTemplate({ title: '', template: '' });
   };
 
@@ -64,7 +63,7 @@ export const NewFileModal: React.FunctionComponent = () => {
       title="AsyncAPI Templates - Start with our template examples"
       confirmText="Use Template"
       confirmDisabled={!selectedTemplate.template}
-      show={newFileEnabled}
+      show={newFileOpened}
       onSubmit={onSubmit}
       onCancel={onCancel}
     >

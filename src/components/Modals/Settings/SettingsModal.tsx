@@ -9,10 +9,10 @@ import { Switch, Tooltip } from '../../common';
 
 import { isDeepEqual } from '../../../helpers';
 import { useServices } from '../../../services';
-
+import { useSettingsState } from '../../../state/new';
 import state from '../../../state';
 
-import type { SettingsState } from '../../../state/settings';
+import type { SettingsState } from '../../../state/new/settings.state';
 
 interface ShowGovernanceOptionProps {
   label: 'warning' | 'information' | 'hint';
@@ -49,18 +49,20 @@ const ShowGovernanceOption: React.FunctionComponent<ShowGovernanceOptionProps> =
 };
 
 export const SettingsModal: React.FunctionComponent = () => {
-  const { editorSvc } = useServices();
-  const settingsState = state.useSettingsState();
-  const [autoSaving, setAutoSaving] = useState(settingsState.editor.autoSaving.get());
-  const [savingDelay, setSavingDelay] = useState(settingsState.editor.savingDelay.get());
-  const [governanceWarnings, setGovernanceWarnings] = useState(settingsState.governance.show.warnings.get());
-  const [governanceInformations, setGovernanceInformations] = useState(settingsState.governance.show.informations.get());
-  const [governanceHints, setGovernanceHints] = useState(settingsState.governance.show.hints.get());
-  const [autoRendering, setAutoRendering] = useState(settingsState.templates.autoRendering.get());
+  const { settingsSvc } = useServices();
+  const settingsState = useSettingsState();
+  const oldSettingsState = state.useSettingsState();
+
+  const [autoSaving, setAutoSaving] = useState(settingsState.editor.autoSaving);
+  const [savingDelay, setSavingDelay] = useState(settingsState.editor.savingDelay);
+  const [governanceWarnings, setGovernanceWarnings] = useState(settingsState.governance.show.warnings);
+  const [governanceInformations, setGovernanceInformations] = useState(settingsState.governance.show.informations);
+  const [governanceHints, setGovernanceHints] = useState(settingsState.governance.show.hints);
+  const [autoRendering, setAutoRendering] = useState(settingsState.templates.autoRendering);
   const [confirmDisabled, setConfirmDisabled] = useState(true);
 
-  useEffect(() => {
-    const newState: Partial<SettingsState> = {
+  const createNewState = (): SettingsState => {
+    return {
       editor: {
         autoSaving,
         savingDelay,
@@ -75,49 +77,29 @@ export const SettingsModal: React.FunctionComponent = () => {
       templates: {
         autoRendering,
       }
-    }; 
-    let oldState: Partial<SettingsState> = JSON.parse(localStorage.getItem('studio-settings') || '');
-    oldState = {
-      editor: oldState.editor,
-      governance: oldState.governance,
-      templates: oldState.templates,
     };
+  }
 
-    const isThisSameObjects = isDeepEqual(newState, oldState);
+  useEffect(() => {
+    const newState = createNewState();
+    const isThisSameObjects = settingsSvc.isEqual(newState);
     setConfirmDisabled(isThisSameObjects);
   }, [autoSaving, savingDelay, autoRendering, governanceWarnings, governanceInformations, governanceHints]);
 
   const saveOptions = (settings: Partial<SettingsState> = {}) => {
-    settingsState.merge({
-      ...settings,
-    });
-    localStorage.setItem('studio-settings', JSON.stringify(settingsState.get()));
+    settingsSvc.set(settings);
   };
 
   const onCancel = () => {
-    settingsState.merge({
+    oldSettingsState.merge({
       showModal: false,
       activeTab: '',
     });
   };
 
   const onSubmit = () => {
-    saveOptions({
-      editor: {
-        autoSaving,
-        savingDelay,
-      },
-      governance: {
-        show: {
-          warnings: governanceWarnings,
-          informations: governanceInformations,
-          hints: governanceHints,
-        }
-      },
-      templates: {
-        autoRendering,
-      }
-    });
+    const newState = createNewState();
+    settingsSvc.set(newState);
 
     // editorSvc.applyMarkers(state.parser.diagnostics.get());
     setConfirmDisabled(true);
@@ -226,7 +208,7 @@ export const SettingsModal: React.FunctionComponent = () => {
       title='Studio settings'
       confirmText="Save"
       confirmDisabled={confirmDisabled}
-      show={settingsState.showModal.get()}
+      show={oldSettingsState.showModal.get()}
       opener={
         <Tooltip content='Studio settings' placement='right' hideOnClick={true}>
           <button

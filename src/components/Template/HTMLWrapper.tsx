@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AsyncApiComponentWP } from '@asyncapi/react-component';
 
 import { useServices } from '../../services';
-import { useDocumentsState } from '../../state/new';
+import { useDocumentsState, useSettingsState } from '../../state/new';
 import state from '../../state';
 
 import type { OldAsyncAPIDocument as AsyncAPIDocument } from '@asyncapi/parser/cjs';
@@ -11,18 +11,14 @@ interface HTMLWrapperProps {}
 
 export const HTMLWrapper: React.FunctionComponent<HTMLWrapperProps> = () => {
   const [parsedSpec, setParsedSpec] = useState<AsyncAPIDocument | null>(null);
-  const document = useDocumentsState(state => state.documents['asyncapi']);
+  const document = useDocumentsState(state => state.documents['asyncapi']?.document) || null;
+  const autoRendering = useSettingsState(state => state.templates.autoRendering);
 
-  const { navigationSvc, specificationSvc } = useServices();
+  const { navigationSvc } = useServices();
   const appState = state.useAppState();
-  const parserState = state.useParserState();
   const editorState = state.useEditorState();
   const templateState = state.useTemplateState();
-  const settingsState = state.useSettingsState();
-
-  const documentValid = parserState.valid.get();
   const editorLoaded = editorState.editorLoaded.get();
-  const autoRendering = settingsState.templates.autoRendering.get();
 
   useEffect(() => {
     if (editorLoaded === true) {
@@ -32,13 +28,13 @@ export const HTMLWrapper: React.FunctionComponent<HTMLWrapperProps> = () => {
 
   useEffect(() => {
     if (autoRendering || parsedSpec === null) {
-      setParsedSpec(document?.document || null);
+      setParsedSpec(document || null);
     }
-  }, [parserState.parsedSpec.get()]); // eslint-disable-line
+  }, [document]); // eslint-disable-line
 
   useEffect(() => {
     if (templateState.rerender.get()) {
-      setParsedSpec(document?.document || null);
+      setParsedSpec(document || null);
       templateState.rerender.set(false);
     }
   }, [templateState.rerender.get()]); // eslint-disable-line
@@ -58,7 +54,7 @@ export const HTMLWrapper: React.FunctionComponent<HTMLWrapperProps> = () => {
     );
   }
 
-  if (!documentValid) {
+  if (!document) {
     return (
       <div className="flex flex-1 overflow-hidden h-full justify-center items-center text-2xl mx-auto px-6 text-center">
         <p>Empty or invalid document. Please fix errors/define AsyncAPI document.</p>
@@ -67,11 +63,11 @@ export const HTMLWrapper: React.FunctionComponent<HTMLWrapperProps> = () => {
   }
 
   return (
-    parsedSpec && (
+    document && (
       <div className="flex flex-1 flex-col h-full overflow-hidden">
         <div className="overflow-auto">
           <AsyncApiComponentWP
-            schema={parsedSpec}
+            schema={document}
             config={{ 
               show: { 
                 errors: false,

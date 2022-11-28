@@ -31,7 +31,6 @@ export class ParserService extends AbstractService {
 
     // initial parse of all saved files
     const { files } = filesState.getState();
-    console.log(files);
     await Promise.all(
       Object.entries(files).map(([uri, file]) => {
         return this.parse(uri, file.content);
@@ -50,6 +49,8 @@ export class ParserService extends AbstractService {
     try {
       const { document, diagnostics: _diagnostics,  extras } = await this.parser.parse(spec, options);
       diagnostics = this.filterDiagnostics(_diagnostics);
+
+      console.log(diagnostics);
   
       if (document) {
         const oldDocument = convertToOldAPI(document);

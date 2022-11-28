@@ -5,7 +5,7 @@ import { DiagnosticSeverity } from '@asyncapi/parser/cjs';
 import { Tooltip } from '../common';
 import { useServices } from '../../services';
 import { debounce } from '../../helpers';
-import { useDocumentsState } from '../../state/new';
+import { useDocumentsState, useSettingsState } from '../../state/new';
 import state from '../../state';
 
 import type { FunctionComponent } from 'react';
@@ -119,7 +119,7 @@ interface SeverityButtonsProps {
 const SeverityButtons: FunctionComponent<SeverityButtonsProps> = ({ active, setActive }) => {
   const { parserSvc } = useServices();
   const diagnostics = useDocumentsState(state => state.documents['asyncapi'].diagnostics);
-  const governanceShowState = state.useSettingsState().governance.show.get();
+  const governanceShowState = useSettingsState(state => state.governance.show);
 
   const errorDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Error);
   const warningDiagnostics = parserSvc.filterDiagnosticsBySeverity(diagnostics, DiagnosticSeverity.Warning);
@@ -229,7 +229,7 @@ export const ProblemsTabContent: FunctionComponent<ProblemsTabProps> = () => {
       const lowerCasingSearch = search.toLowerCase();
       return !(lowerCasingSearch && !message.toLowerCase().includes(lowerCasingSearch));
     });
-  }, [diagnostics, search]);
+  }, [diagnostics, search, active]);
 
   return (
     <div className="flex-1 text-white text-xs h-full relative overflow-x-hidden overflow-y-auto">

@@ -2,6 +2,7 @@ import React from 'react';
 import { VscRadioTower } from 'react-icons/vsc'; 
 
 import { useServices } from '../../services';
+import { useDocumentsState, useSettingsState } from '../../state/new';
 import state from '../../state';
 
 interface TerminalInfoProps {}
@@ -10,15 +11,12 @@ export const TerminalInfo: React.FunctionComponent<TerminalInfoProps> = () => {
   const { specificationSvc } = useServices();
   const appState = state.useAppState();
   const editorState = state.useEditorState();
-  const parserState = state.useParserState();
-  const settingsState = state.useSettingsState();
+  const autoSaving = useSettingsState(state => state.editor.autoSaving);
+  const document = useDocumentsState(state => state.documents['asyncapi']);
 
   const liveServer = appState.liveServer.get();
-  const actualVersion = parserState.parsedSpec.get()?.version() || '2.0.0';
+  const actualVersion = document?.document?.version() || '2.0.0';
   const latestVersion = specificationSvc.latestVersion;
-  const documentValid = parserState.valid.get();
-  const hasErrorDiagnostics = parserState.hasErrorDiagnostics.get();
-  const autoSaving = settingsState.editor.autoSaving.get();
   const modified = editorState.modified.get();
 
   function onNonLatestClick(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -40,7 +38,7 @@ export const TerminalInfo: React.FunctionComponent<TerminalInfoProps> = () => {
           <span>Live server</span>
         </div>
       )}
-      {hasErrorDiagnostics ? (
+      {!document.valid ? (
         <div className="ml-3">
           <span className="text-red-500">
             <svg
@@ -95,7 +93,7 @@ export const TerminalInfo: React.FunctionComponent<TerminalInfoProps> = () => {
         </span>
         <span>{autoSaving ? 'Autosave: On' : 'Autosave: Off'}</span>
       </div>
-      {actualVersion !== latestVersion && documentValid === true && (
+      {actualVersion !== latestVersion && document.valid === true && (
         <div className="ml-3" onClick={onNonLatestClick}>
           <span className="text-yellow-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-5 w-5 mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">

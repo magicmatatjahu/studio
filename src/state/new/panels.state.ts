@@ -11,8 +11,9 @@ export type PanelsState = {
     secondaryPanel: boolean;
     contextPanel: boolean;
   };
-  // TODO: remove when panels tabs will be introduced 
+  // TODO: remove when panels tabs will be introduced
   secondaryPanelType: 'template' | 'visualiser';
+  newFileOpened: boolean;
 }
 
 export const panelsState = create(
@@ -28,6 +29,7 @@ export const panelsState = create(
         contextPanel: true,
       },
       secondaryPanelType: 'template',
+      newFileOpened: false,
     }), 
     {
       name: 'studio-panels',
