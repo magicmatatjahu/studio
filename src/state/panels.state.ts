@@ -1,6 +1,11 @@
 import create from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type PanelTab = {
+  name: string;
+  metadata: any;
+}
+
 export type PanelsState = {
   show: {
     activityBar: boolean;
@@ -11,6 +16,8 @@ export type PanelsState = {
     secondaryPanel: boolean;
     contextPanel: boolean;
   };
+  primaryTabs: Array<PanelTab>;
+  secondaryTabs: Array<PanelTab>;
   // TODO: remove when panels tabs will be introduced
   secondaryPanelType: 'template' | 'visualiser';
 }
@@ -27,12 +34,14 @@ export const panelsState = create(
         secondaryPanel: true,
         contextPanel: true,
       },
+      primaryTabs: [],
+      secondaryTabs: [],
       secondaryPanelType: 'template',
     }), 
-  {
-    name: 'studio-panels',
-    getStorage: () => localStorage,
-  }
+    {
+      name: 'studio-panels',
+      getStorage: () => localStorage,
+    }
   ),
 );
 

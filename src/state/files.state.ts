@@ -157,46 +157,116 @@ export interface FileStat {
   mtime: number;
 }
 
+export type Directory = {
+  type: 'directory';
+  uri: string;
+  name: string;
+  children: Array<Directory | File>;
+  from: 'storage';
+  stat?: FileStat;
+  parent?: Directory;
+}
+
 export type File = {
+  type: 'file';
   uri: string;
   name: string;
   content: string;
   language: 'json' | 'yaml';
   modified: boolean;
+  from: 'storage' | 'url' | 'base64';
+  source?: string;
   stat?: FileStat;
+  parent?: Directory;
 }
 
 export type FilesState = {
   files: Record<string, File>;
+  directories: Record<string, Directory>;
 }
 
 export type FilesActions = {
   updateFile: (uri: string, file: Partial<File>) => void;
+  removeFile: (uri: string) => void;
+  updateDirectory: (uri: string, directory: Partial<Directory>) => void;
+  removeDirectory: (uri: string) => void;
 }
+
+const defaultFiles: Record<string, File> = {
+  asyncapi: {
+    type: 'file',
+    uri: 'asyncapi',
+    name: 'asyncapi',
+    content: schema,
+    language: schema.trimStart()[0] === '{' ? 'json' : 'yaml',
+    modified: false,
+    from: 'storage',
+    source: undefined,
+    parent: undefined,
+    stat: {
+      mtime: (new Date()).getTime(),
+    }
+  }
+};
 
 export const filesState = create(
   persist<FilesState & FilesActions>(set => 
     ({
-      files: {
-        asyncapi: {
-          uri: 'asyncapi',
-          name: 'asyncapi',
-          content: schema,
-          language: 'yaml',
-          modified: false,
-          stat: {
-            mtime: (new Date()).getTime(),
-          }
-        }
-      },
+      files: defaultFiles,
+      directories: {},
       updateFile(uri: string, file: Partial<File>) {
         set(state => ({ files: { ...state.files, [String(uri)]: { ...state.files[String(uri)] || {}, ...file } } }));
       },
+      removeFile(uri: string) {
+        set(state => {
+          const files = { ...state.files };
+          const file = files[String(uri)];
+          if (!file) {
+            return state;
+          }
+
+          delete files[String(uri)];
+          const parent = file.parent;
+          if (!parent) {
+            return { files };
+          }
+
+          const directories = { ...state.directories };
+          directories[String(parent.uri)] = { 
+            ...parent, 
+            children: parent.children.filter(c => !(c.uri === uri && c.type === 'file')),
+          }; 
+          return { files, directories };
+        });
+      },
+      updateDirectory(uri: string, directory: Partial<Directory>) {
+        set(state => ({ directories: { ...state.directories, [String(uri)]: { ...state.directories[String(uri)] || {}, ...directory } } }));
+      },
+      removeDirectory(uri: string) {
+        set(state => {
+          const directories = { ...state.directories };
+          const directory = directories[String(uri)];
+          if (!directory) {
+            return state;
+          }
+
+          delete directories[String(uri)];
+          if (directory.children.length === 0) {
+            return { directories };
+          }
+          
+          const files = { ...state.files };
+          directory.children.forEach(c => {
+
+          });
+          return { directories, files };
+        });
+      },
     }), 
-  {
-    name: 'studio-files',
-    getStorage: () => localStorage,
-  }
+    {
+      name: 'studio-files',
+      getStorage: () => localStorage,
+    }
   ),
 );
 
